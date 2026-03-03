@@ -1,0 +1,3 @@
+mode: auto
+project_root: lean/pvsnp_hunter
+attempts_dir: data/proof_attempts
