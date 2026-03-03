@@ -6,7 +6,7 @@ pvsnp-hunter is a multi-agent system for circuit lower bounds, conjecture synthe
 - `agents/circuit_explorer/`: exact small-n circuit cartography.
 - `agents/sat_oracle/`: SAT instance generation, solving, and hardness fingerprinting.
 - `agents/lower_bound_hunter/`: Williams pipeline + classical lower-bound techniques.
-- `agents/conjecture_engine/`: formal conjecture generation and small-case testing.
+- `agents/conjecture_engine/`: fully local conjecture generation (templates + data mining), optional Ollama augmentation, and small-case testing.
 - `agents/lean_formalizer/`: JSON proof-sketch → Lean attempt, draft/live verification, feedback.
 - `agents/meta_learner/`: failure ingestion, barrier classification, strategy recommendation, progress scoring.
 

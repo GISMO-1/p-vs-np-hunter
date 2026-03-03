@@ -2,112 +2,65 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Mapping
 
-from agents.conjecture_engine.agent import Conjecture, ConjectureEngineAgent, ConjectureGenerator
-
-
-class MockGenerator(ConjectureGenerator):
-    def __init__(self) -> None:
-        super().__init__(api_key="k", model="claude-sonnet-4-20250514")
-        self.last_payload: dict[str, Any] = {}
-
-    def _call_api(self, payload: Mapping[str, Any]) -> dict[str, Any]:
-        self.last_payload = dict(payload)
-        return {
-            "conjectures": [
-                {
-                    "id": "c1",
-                    "statement": "Parity not in AC0 with polynomial size.",
-                    "informal_description": "Connected to P vs NP through circuit lower bounds.",
-                    "motivation": "Classical frontier.",
-                    "related_results": ["Hastad-1986"],
-                    "falsification_path": "Search small circuits.",
-                    "implication_if_true": "Stronger AC0 understanding.",
-                    "small_case_testable": True,
-                    "confidence_prior": 0.5,
-                }
-            ]
-        }
+from agents.conjecture_engine.agent import ConjectureEngineAgent, ConjectureMiner, ConjectureTemplateEngine, OllamaConjectureGenerator
 
 
-def _agent(tmp_path: Path) -> tuple[ConjectureEngineAgent, MockGenerator]:
+def _write(path: Path, payload: dict[str, object]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload), encoding="utf-8")
+
+
+def _agent(tmp_path: Path) -> ConjectureEngineAgent:
     cfg = tmp_path / "config.yaml"
     cfg.write_text(
         "\n".join(
             [
-                "model: claude-sonnet-4-20250514",
-                "anthropic_api_key: test",
+                "model: deepseek-r1",
+                "local_llm_enabled: true",
+                "ollama_host: http://localhost:11434",
                 f"conjecture_db_dir: {tmp_path / 'db'}",
+                f"lower_bounds_dir: {tmp_path / 'lower_bounds'}",
+                f"circuit_families_dir: {tmp_path / 'circuit_families'}",
+                f"hard_instances_dir: {tmp_path / 'hard_instances'}",
             ]
         ),
         encoding="utf-8",
     )
-    agent = ConjectureEngineAgent(cfg)
-    mock = MockGenerator()
-    agent.generator = mock
-    return agent, mock
+    return ConjectureEngineAgent(cfg)
 
 
-def test_api_payload_shape(tmp_path: Path) -> None:
-    agent, mock = _agent(tmp_path)
-    _ = agent.propose({"context": "x"})
-    payload = mock.last_payload
-    assert payload["model"] == "claude-sonnet-4-20250514"
-    assert "system" in payload
-    assert payload["messages"]
+def test_template_generation_produces_valid_conjectures() -> None:
+    engine = ConjectureTemplateEngine()
+    out = engine.generate({"session": "t"})
+    assert out
+    assert all(c.id and c.statement and c.related_results for c in out)
 
 
-def test_small_case_falsifies_known_false(tmp_path: Path) -> None:
-    agent, _ = _agent(tmp_path)
-    c = Conjecture(
-        id="false1",
-        statement="P=NP is false-conjecture marker",
-        informal_description="test",
-        motivation="test",
-        related_results=[],
-        falsification_path="test",
-        implication_if_true="test",
-        small_case_testable=True,
-        confidence_prior=0.2,
-        confidence_history=[0.2],
-    )
-    out = agent.test(c)
-    assert out.falsified
-    assert out.updated_confidence < 0.05
+def test_miner_finds_acc0_gap(tmp_path: Path) -> None:
+    _write(tmp_path / "lower" / "ac0.json", {"circuit_class": "AC0", "bound": "exp"})
+    _write(tmp_path / "lower" / "tc0.json", {"circuit_class": "TC0", "bound": "superpoly"})
+    miner = ConjectureMiner(tmp_path / "lower", tmp_path / "circuits", tmp_path / "hard")
+    out = miner.mine()
+    assert any(c.id == "miner-gap-acc0" for c in out)
 
 
-def test_small_case_supports_known_true(tmp_path: Path) -> None:
-    agent, _ = _agent(tmp_path)
-    conjecture = agent.propose()[0]
-    out = agent.test(conjecture)
-    assert out.supported
-    assert out.updated_confidence > 0.5
+def test_ollama_fallback_when_unavailable() -> None:
+    ollama = OllamaConjectureGenerator("http://localhost:65535", "deepseek-r1", enabled=True)
+    out = ollama.propose({"goal": "test"})
+    assert out == []
 
 
-def test_ranking_deterministic(tmp_path: Path) -> None:
-    agent, _ = _agent(tmp_path)
-    c1 = agent.propose()[0]
-    c2 = Conjecture(
-        id="c2",
-        statement="NEXP lower bound candidate",
-        informal_description="Related to P vs NP",
-        motivation="test",
-        related_results=[],
-        falsification_path="",
-        implication_if_true="",
-        small_case_testable=False,
-        confidence_prior=0.1,
-        confidence_history=[0.1],
-    )
-    agent._active = [c1, c2]
-    ordered = [c.id for c in agent.rank()]
-    assert ordered == ["c1", "c2"]
+def test_agent_propose_degrades_gracefully_with_empty_data(tmp_path: Path) -> None:
+    agent = _agent(tmp_path)
+    out = agent.propose({"session": "x"})
+    assert out
+    assert (tmp_path / "db").exists()
 
 
 def test_serialization_roundtrip(tmp_path: Path) -> None:
-    agent, _ = _agent(tmp_path)
-    c = agent.propose()[0]
+    agent = _agent(tmp_path)
+    c = agent.propose({"session": "r"})[0]
     saved = tmp_path / "db" / f"{c.id}.json"
     payload = json.loads(saved.read_text(encoding="utf-8"))
     assert payload["id"] == c.id

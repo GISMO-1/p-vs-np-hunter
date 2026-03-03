@@ -1,3 +1,7 @@
-model: claude-sonnet-4-20250514
-anthropic_api_key: ""
+model: deepseek-r1
+local_llm_enabled: true
+ollama_host: http://localhost:11434
 conjecture_db_dir: data/conjectures
+lower_bounds_dir: data/lower_bounds
+circuit_families_dir: data/circuit_families
+hard_instances_dir: data/hard_instances

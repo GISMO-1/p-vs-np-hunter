@@ -86,7 +86,7 @@ This means:
 **Codex instructions:**
 - Conjectures must be formally stated, not informal vibes
 - Every conjecture must include: statement, motivation, small-case evidence, falsification path
-- Use the Anthropic API (claude-sonnet-4-20250514) for conjecture generation
+- Use local conjecture generation first: structural templates + mined system data; optional Ollama (`deepseek-r1`, `llama3`, `mistral`) only when available
 - Build a conjecture evolution tree: child conjectures derived from parent conjectures
 
 ---
