@@ -1,0 +1,5 @@
+seed: 1337
+hard_instances_dir: data/hard_instances
+model_path: data/models/sat_hardness_predictor.pt
+cadical_timeout_sec: 5
+backbone_samples: 50

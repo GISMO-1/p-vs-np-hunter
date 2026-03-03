@@ -1,0 +1,26 @@
+{
+  "feature_names": [
+    "clause_var_ratio",
+    "degree_mean",
+    "degree_std",
+    "clustering",
+    "spectral_gap",
+    "backbone_fraction",
+    "resolution_lb_est",
+    "vsids_variance"
+  ],
+  "values": [
+    2.8333333333333335,
+    6.0,
+    0.0,
+    0.4,
+    0.0,
+    0.0,
+    2.807354922057604,
+    0.0
+  ],
+  "metadata": {
+    "num_clauses": 34,
+    "num_vars": 12
+  }
+}

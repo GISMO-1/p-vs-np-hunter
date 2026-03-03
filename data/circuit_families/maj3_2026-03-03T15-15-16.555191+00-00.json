@@ -1,0 +1,35 @@
+{
+  "function_name": "maj3",
+  "output_path": "",
+  "records": [
+    {
+      "depth": null,
+      "minimum_size_found": null,
+      "model": "ACC0",
+      "structural_invariants": {
+        "depth_size_tradeoff": {},
+        "gate_elimination_candidates": [],
+        "locality_score": 0.0,
+        "symmetry_group_size": 6
+      },
+      "switching_lemma_check": null,
+      "witness_expression": null
+    }
+  ],
+  "timestamp": "2026-03-03T15:15:16.555191+00:00",
+  "truth_table": {
+    "000": false,
+    "001": false,
+    "010": false,
+    "011": true,
+    "100": false,
+    "101": true,
+    "110": true,
+    "111": true
+  },
+  "variable_names": [
+    "x0",
+    "x1",
+    "x2"
+  ]
+}
