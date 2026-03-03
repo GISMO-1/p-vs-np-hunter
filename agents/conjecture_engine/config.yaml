@@ -1,0 +1,3 @@
+model: claude-sonnet-4-20250514
+anthropic_api_key: ""
+conjecture_db_dir: data/conjectures
