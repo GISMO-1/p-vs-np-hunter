@@ -4,8 +4,11 @@ import json
 from pathlib import Path
 from typing import Callable, Mapping
 
-from agents.circuit_explorer.agent import (BooleanFunction,
-                                           CircuitExplorerAgent, CircuitModel)
+from agents.circuit_explorer.agent import (
+    BooleanFunction,
+    CircuitExplorerAgent,
+    CircuitModel,
+)
 from core.complexity_models.circuit import CircuitClass
 
 

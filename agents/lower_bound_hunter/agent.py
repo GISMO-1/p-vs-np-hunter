@@ -10,14 +10,18 @@ References:
 - Williams, R. (2011), nontrivial ACC0-SAT algorithms imply NEXP not in ACC0.
 """
 
+import json
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
-import json
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 from core.complexity_models.circuit import CircuitClass
-from core.complexity_models.switching_lemma import DNF, exact_depth_tail_probability, switching_lemma_upper_bound
+from core.complexity_models.switching_lemma import (
+    DNF,
+    exact_depth_tail_probability,
+    switching_lemma_upper_bound,
+)
 
 
 @dataclass(frozen=True)
@@ -94,7 +98,10 @@ class WilliamsPipeline:
         if cls == CircuitClass.AC0:
             return (0.92, "depth-reduction + random restrictions SAT (AC0 baseline)")
         if cls == CircuitClass.ACC0:
-            return (0.99, "polynomial decomposition + ACC0-SAT speedup (Williams-style)")
+            return (
+                0.99,
+                "polynomial decomposition + ACC0-SAT speedup (Williams-style)",
+            )
         if cls == CircuitClass.MONOTONE:
             return (1.0, "brute-force baseline")
         return (1.0, "unknown")
@@ -116,7 +123,9 @@ class GateEliminationEngine:
 class MonotoneLowerBoundEngine:
     """Razborov approximation-method computational witness for CLIQUE."""
 
-    def sunflower_find(self, family: Sequence[set[int]], petals: int) -> tuple[set[int], list[set[int]]] | None:
+    def sunflower_find(
+        self, family: Sequence[set[int]], petals: int
+    ) -> tuple[set[int], list[set[int]]] | None:
         for i, first in enumerate(family):
             petals_sets = [first]
             core = set(first)
@@ -158,14 +167,18 @@ class MonotoneLowerBoundEngine:
 class RandomRestrictionEngine:
     """Multi-round restrictions extending Håstad-style experiments."""
 
-    def multi_round_tail_bound(self, dnf: DNF, p_schedule: Sequence[float], t: int) -> dict[str, float]:
+    def multi_round_tail_bound(
+        self, dnf: DNF, p_schedule: Sequence[float], t: int
+    ) -> dict[str, float]:
         current = dnf
         exact_tail = 1.0
         theorem_bound = 1.0
         for p in p_schedule:
             round_tail = exact_depth_tail_probability(current, p=p, t=t)
             exact_tail *= round_tail
-            theorem_bound *= switching_lemma_upper_bound(width=max(1, current.width()), p=p, t=t)
+            theorem_bound *= switching_lemma_upper_bound(
+                width=max(1, current.width()), p=p, t=t
+            )
         return {"exact_tail": exact_tail, "theorem_bound": theorem_bound}
 
     def parity_ac0_bound(self, depth: int) -> str:
@@ -174,7 +187,11 @@ class RandomRestrictionEngine:
 
 class LowerBoundHunterAgent:
     def __init__(self, config_path: str | Path | None = None):
-        self.config = self._load_config(Path(config_path) if config_path else Path(__file__).with_name("config.yaml"))
+        self.config = self._load_config(
+            Path(config_path)
+            if config_path
+            else Path(__file__).with_name("config.yaml")
+        )
         self.pipeline = WilliamsPipeline()
         self.gate_elimination = GateEliminationEngine()
         self.monotone = MonotoneLowerBoundEngine()
@@ -182,19 +199,33 @@ class LowerBoundHunterAgent:
         self.db_dir = Path(self.config["lower_bound_db_dir"])
         self.db_dir.mkdir(parents=True, exist_ok=True)
 
-    def hunt(self, circuit_class: CircuitModel, target_function: str) -> LowerBoundResult:
+    def hunt(
+        self, circuit_class: CircuitModel, target_function: str
+    ) -> LowerBoundResult:
         result = self.pipeline.run(circuit_class.cls, target_function)
-        if target_function.lower() == "clique" and circuit_class.cls == CircuitClass.MONOTONE:
+        if (
+            target_function.lower() == "clique"
+            and circuit_class.cls == CircuitClass.MONOTONE
+        ):
             result = self.monotone.clique_bound()
-        if target_function.lower() == "parity" and circuit_class.cls == CircuitClass.AC0:
-            result.bound_value = self.restrictions.parity_ac0_bound(circuit_class.max_depth)
+        if (
+            target_function.lower() == "parity"
+            and circuit_class.cls == CircuitClass.AC0
+        ):
+            result.bound_value = self.restrictions.parity_ac0_bound(
+                circuit_class.max_depth
+            )
             result.citations.append("Hastad-1986")
         self._store_result(result)
         return result
 
     def validate_known_results(self) -> ValidationReport:
-        parity = self.hunt(CircuitModel(CircuitClass.AC0, max_size=32, max_depth=3), "parity")
-        clique = self.hunt(CircuitModel(CircuitClass.MONOTONE, max_size=64, max_depth=6), "clique")
+        parity = self.hunt(
+            CircuitModel(CircuitClass.AC0, max_size=32, max_depth=3), "parity"
+        )
+        clique = self.hunt(
+            CircuitModel(CircuitClass.MONOTONE, max_size=64, max_depth=6), "clique"
+        )
         checks = {
             "ac0_parity": "exp(Omega" in parity.bound_value,
             "monotone_clique": "superpolynomial" in clique.bound_value,
@@ -224,14 +255,31 @@ class LowerBoundHunterAgent:
         }
 
     def handle_message(self, msg: Mapping[str, Any]) -> dict[str, Any]:
-        required = {"from_agent", "to_agent", "message_type", "payload", "confidence", "citations", "lean_verified", "timestamp", "session_id"}
+        required = {
+            "from_agent",
+            "to_agent",
+            "message_type",
+            "payload",
+            "confidence",
+            "citations",
+            "lean_verified",
+            "timestamp",
+            "session_id",
+        }
         missing = sorted(required - set(msg))
         if missing:
             raise ValueError(f"Message missing required fields: {missing}")
         payload = dict(msg["payload"])
         if msg["message_type"] == "query" and payload.get("action") == "hunt":
             cls = CircuitClass(payload.get("circuit_class", "AC0"))
-            result = self.hunt(CircuitModel(cls, int(payload.get("max_size", 16)), int(payload.get("max_depth", 3))), str(payload.get("target_function", "parity")))
+            result = self.hunt(
+                CircuitModel(
+                    cls,
+                    int(payload.get("max_size", 16)),
+                    int(payload.get("max_depth", 3)),
+                ),
+                str(payload.get("target_function", "parity")),
+            )
             response_payload: dict[str, Any] = asdict(result)
         else:
             response_payload = {"status": "unsupported"}
@@ -261,7 +309,10 @@ class LowerBoundHunterAgent:
             "lean_ready": result.lean_ready,
         }
         stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%S%f")
-        path = self.db_dir / f"{result.circuit_class.lower()}_{result.function.lower()}_{stamp}.json"
+        path = (
+            self.db_dir
+            / f"{result.circuit_class.lower()}_{result.function.lower()}_{stamp}.json"
+        )
         path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
         return path
 

@@ -35,7 +35,10 @@ class DNF:
         return max((len(term) for term in self.terms), default=0)
 
     def evaluate(self, assignment: Mapping[str, bool]) -> bool:
-        return any(all(assignment[var] == polarity for var, polarity in term) for term in self.terms)
+        return any(
+            all(assignment[var] == polarity for var, polarity in term)
+            for term in self.terms
+        )
 
     def restrict(self, rho: Mapping[str, bool | None]) -> RestrictedDNF:
         restricted_terms: list[Term] = []
@@ -73,7 +76,10 @@ class RestrictedDNF:
     def evaluate(self, assignment: Mapping[str, bool]) -> bool:
         if self.constant is not None:
             return self.constant
-        return any(all(assignment[var] == polarity for var, polarity in term) for term in self.terms)
+        return any(
+            all(assignment[var] == polarity for var, polarity in term)
+            for term in self.terms
+        )
 
 
 def random_restriction(variables: Sequence[str], p: float, rng: Random) -> Restriction:
@@ -171,7 +177,9 @@ def monte_carlo_depth_tail_probability(
     return hits / trials
 
 
-def _restrict_state(state: Tuple[Term, ...], rho: Mapping[str, bool | None]) -> RestrictedDNF:
+def _restrict_state(
+    state: Tuple[Term, ...], rho: Mapping[str, bool | None]
+) -> RestrictedDNF:
     return DNF(state).restrict(rho)
 
 

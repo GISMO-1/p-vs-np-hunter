@@ -1,5 +1,30 @@
+# Python
 __pycache__/
-*.py[cod]
-.pytest_cache/
+*.pyc
+*.pyo
 .mypy_cache/
+.pytest_cache/
+dist/
+build/
+*.egg-info/
 .coverage
+
+# Data artifacts
+# Keep JSON metadata in data/hard_instances/, ignore generated CNF instances.
+data/hard_instances/*.cnf
+# Ignore large model checkpoints.
+data/models/*.pt
+
+# Lean build artifacts
+lean/pvsnp_hunter/.lake/
+lean/pvsnp_hunter/build/
+
+# Environment
+.env
+.venv/
+venv/
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db

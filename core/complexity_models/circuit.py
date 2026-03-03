@@ -137,7 +137,9 @@ class BooleanCircuit:
         for gate in self._gate_map.values():
             for input_name in gate.inputs:
                 if input_name not in self._gate_map:
-                    raise ValueError(f"Gate '{gate.name}' references unknown '{input_name}'")
+                    raise ValueError(
+                        f"Gate '{gate.name}' references unknown '{input_name}'"
+                    )
 
 
 class CircuitClass(str, Enum):
@@ -155,7 +157,13 @@ def validate_circuit_class(circuit: BooleanCircuit, cls: CircuitClass) -> None:
 
     gates = circuit.gates.values()
     if cls == CircuitClass.AC0:
-        allowed = {GateType.INPUT, GateType.CONST, GateType.NOT, GateType.AND, GateType.OR}
+        allowed = {
+            GateType.INPUT,
+            GateType.CONST,
+            GateType.NOT,
+            GateType.AND,
+            GateType.OR,
+        }
         for gate in gates:
             if gate.gate_type not in allowed:
                 raise ValueError(f"AC0 forbids gate type {gate.gate_type}")

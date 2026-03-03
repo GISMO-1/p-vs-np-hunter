@@ -1,6 +1,12 @@
 """Core Boolean circuit complexity models and lower-bound primitives."""
 
-from .circuit import BooleanCircuit, CircuitClass, Gate, GateType, validate_circuit_class
+from .circuit import (
+    BooleanCircuit,
+    CircuitClass,
+    Gate,
+    GateType,
+    validate_circuit_class,
+)
 from .switching_lemma import (
     DNF,
     decision_tree_depth,
