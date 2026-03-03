@@ -1,0 +1,37 @@
+{
+  "function_name": "xor2",
+  "output_path": "",
+  "records": [
+    {
+      "depth": 3,
+      "minimum_size_found": 8,
+      "model": "AC0",
+      "structural_invariants": {
+        "depth_size_tradeoff": {
+          "3": 8
+        },
+        "gate_elimination_candidates": [],
+        "locality_score": 2.0,
+        "symmetry_group_size": 2
+      },
+      "switching_lemma_check": {
+        "p": 0.1,
+        "t": 3.0,
+        "tail_probability": 0.0,
+        "upper_bound": 1.0
+      },
+      "witness_expression": "AND(OR(x0,x1),NOT(AND(x0,x1)))"
+    }
+  ],
+  "timestamp": "2026-03-03T15:15:16.513890+00:00",
+  "truth_table": {
+    "00": false,
+    "01": true,
+    "10": true,
+    "11": false
+  },
+  "variable_names": [
+    "x0",
+    "x1"
+  ]
+}

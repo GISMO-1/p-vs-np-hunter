@@ -1,0 +1,33 @@
+{
+  "function_name": "parity",
+  "output_path": "",
+  "records": [
+    {
+      "depth": null,
+      "minimum_size_found": null,
+      "model": "MONOTONE",
+      "structural_invariants": {
+        "citation": "Razborov-1985-monotone-framework",
+        "known_lower_bound": "Parity is non-monotone; no monotone circuit computes it exactly (thus super-polynomial/infinite monotone size)."
+      },
+      "switching_lemma_check": null,
+      "witness_expression": null
+    }
+  ],
+  "timestamp": "2026-03-03T15:15:16.503013+00:00",
+  "truth_table": {
+    "000": false,
+    "001": true,
+    "010": true,
+    "011": false,
+    "100": true,
+    "101": false,
+    "110": false,
+    "111": true
+  },
+  "variable_names": [
+    "x0",
+    "x1",
+    "x2"
+  ]
+}

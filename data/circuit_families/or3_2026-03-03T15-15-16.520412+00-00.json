@@ -1,0 +1,42 @@
+{
+  "function_name": "or3",
+  "output_path": "",
+  "records": [
+    {
+      "depth": 2,
+      "minimum_size_found": 5,
+      "model": "MONOTONE",
+      "structural_invariants": {
+        "depth_size_tradeoff": {
+          "2": 5
+        },
+        "gate_elimination_candidates": [],
+        "locality_score": 3.0,
+        "symmetry_group_size": 6
+      },
+      "switching_lemma_check": {
+        "p": 0.1,
+        "t": 2.0,
+        "tail_probability": 0.014500000000000002,
+        "upper_bound": 2.25
+      },
+      "witness_expression": "OR(x0,OR(x1,x2))"
+    }
+  ],
+  "timestamp": "2026-03-03T15:15:16.520412+00:00",
+  "truth_table": {
+    "000": false,
+    "001": true,
+    "010": true,
+    "011": true,
+    "100": true,
+    "101": true,
+    "110": true,
+    "111": true
+  },
+  "variable_names": [
+    "x0",
+    "x1",
+    "x2"
+  ]
+}
