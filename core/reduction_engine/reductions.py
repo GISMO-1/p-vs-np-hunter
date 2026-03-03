@@ -95,9 +95,15 @@ def three_sat_to_clique(instance: SATInstance) -> CliqueInstance:
 def three_sat_to_independent_set(instance: SATInstance) -> IndependentSetInstance:
     """3-SAT→Independent Set by complementing Clique reduction (Karp 1972)."""
     clique = three_sat_to_clique(instance)
-    all_edges = {(u, v) for u in range(clique.graph.num_vertices) for v in range(u + 1, clique.graph.num_vertices)}
+    all_edges = {
+        (u, v)
+        for u in range(clique.graph.num_vertices)
+        for v in range(u + 1, clique.graph.num_vertices)
+    }
     comp = all_edges - clique.graph.edges
-    return IndependentSetInstance(GraphInstance(clique.graph.num_vertices, comp), clique.k)
+    return IndependentSetInstance(
+        GraphInstance(clique.graph.num_vertices, comp), clique.k
+    )
 
 
 def three_sat_to_vertex_cover(instance: SATInstance) -> VertexCoverInstance:
@@ -135,7 +141,9 @@ def three_sat_to_three_coloring(instance: SATInstance) -> ThreeColorInstance:
     return ThreeColorInstance(GraphInstance(next_v, edges))
 
 
-def three_sat_to_hamiltonian_circuit(instance: SATInstance) -> HamiltonianCircuitInstance:
+def three_sat_to_hamiltonian_circuit(
+    instance: SATInstance,
+) -> HamiltonianCircuitInstance:
     """3-SAT→Hamiltonian Circuit via SAT-encoding bridge (Karp 1972 HC problem).
 
     Runtime: O((n+m)^2): reduction to 3-coloring, then line-graph cycle augmentation.
@@ -152,7 +160,9 @@ def verify_clique(instance: SATInstance, solution: set[int]) -> bool:
     red = three_sat_to_clique(instance)
     if len(solution) != red.k:
         return False
-    if not all((min(u, v), max(u, v)) in red.graph.edges for u, v in combinations(solution, 2)):
+    if not all(
+        (min(u, v), max(u, v)) in red.graph.edges for u, v in combinations(solution, 2)
+    ):
         return False
     assignment: dict[int, bool] = {}
     for node in solution:
@@ -166,7 +176,10 @@ def verify_independent_set(instance: SATInstance, solution: set[int]) -> bool:
     red = three_sat_to_independent_set(instance)
     if len(solution) != red.k:
         return False
-    return all((min(u, v), max(u, v)) not in red.graph.edges for u, v in combinations(solution, 2))
+    return all(
+        (min(u, v), max(u, v)) not in red.graph.edges
+        for u, v in combinations(solution, 2)
+    )
 
 
 def verify_vertex_cover(instance: SATInstance, solution: set[int]) -> bool:
@@ -200,7 +213,10 @@ def verify_hamiltonian(instance: SATInstance, cycle: list[int]) -> bool:
 def solve_clique(inst: CliqueInstance) -> set[int] | None:
     verts = range(inst.graph.num_vertices)
     for subset in combinations(verts, inst.k):
-        if all((min(u, v), max(u, v)) in inst.graph.edges for u, v in combinations(subset, 2)):
+        if all(
+            (min(u, v), max(u, v)) in inst.graph.edges
+            for u, v in combinations(subset, 2)
+        ):
             return set(subset)
     return None
 
@@ -208,7 +224,10 @@ def solve_clique(inst: CliqueInstance) -> set[int] | None:
 def solve_independent_set(inst: IndependentSetInstance) -> set[int] | None:
     verts = range(inst.graph.num_vertices)
     for subset in combinations(verts, inst.k):
-        if all((min(u, v), max(u, v)) not in inst.graph.edges for u, v in combinations(subset, 2)):
+        if all(
+            (min(u, v), max(u, v)) not in inst.graph.edges
+            for u, v in combinations(subset, 2)
+        ):
             return set(subset)
     return None
 

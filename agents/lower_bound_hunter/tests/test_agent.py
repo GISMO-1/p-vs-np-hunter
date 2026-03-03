@@ -30,7 +30,9 @@ def test_gate_elimination_small_functions() -> None:
 
 def test_serialization_schema(tmp_path: Path) -> None:
     cfg = tmp_path / "config.yaml"
-    cfg.write_text("lower_bound_db_dir: " + str(tmp_path / "db") + "\n", encoding="utf-8")
+    cfg.write_text(
+        "lower_bound_db_dir: " + str(tmp_path / "db") + "\n", encoding="utf-8"
+    )
     agent = LowerBoundHunterAgent(config_path=cfg)
     _ = agent.hunt(CircuitModel(CircuitClass.AC0, 16, 3), "parity")
     files = list((tmp_path / "db").glob("*.json"))

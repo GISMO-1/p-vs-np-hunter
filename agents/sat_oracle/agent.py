@@ -9,16 +9,16 @@ References:
 - B. Monien and E. Speckenmeyer, "Solving satisfiability in less than 2^n steps," Discrete Applied Math. 1985 (DPLL lineage).
 """
 
-from dataclasses import asdict, dataclass
-from datetime import UTC, datetime
 import json
 import math
-from pathlib import Path
 import random
 import re
 import statistics
 import subprocess
 import time
+from dataclasses import asdict, dataclass
+from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 
@@ -53,7 +53,9 @@ class SATInstance:
                 continue
             nums = [int(x) for x in line.split()]
             clauses.append(tuple(x for x in nums if x != 0))
-        return SATInstance(meta["instance_type"], meta["num_vars"], clauses, meta["metadata"])
+        return SATInstance(
+            meta["instance_type"], meta["num_vars"], clauses, meta["metadata"]
+        )
 
 
 @dataclass
@@ -88,10 +90,32 @@ class DPLLSolver:
         assignment = self._dpll(instance.clauses, {}, instance.num_vars, stats)
         elapsed = time.perf_counter() - start
         if assignment is None:
-            return SolveResult("UNSAT", elapsed, stats["conflicts"], stats["decisions"], stats["learned"], None, "dpll")
-        return SolveResult("SAT", elapsed, stats["conflicts"], stats["decisions"], stats["learned"], assignment, "dpll")
+            return SolveResult(
+                "UNSAT",
+                elapsed,
+                stats["conflicts"],
+                stats["decisions"],
+                stats["learned"],
+                None,
+                "dpll",
+            )
+        return SolveResult(
+            "SAT",
+            elapsed,
+            stats["conflicts"],
+            stats["decisions"],
+            stats["learned"],
+            assignment,
+            "dpll",
+        )
 
-    def _dpll(self, clauses: Sequence[tuple[int, ...]], assignment: dict[int, bool], num_vars: int, stats: dict[str, int]) -> dict[int, bool] | None:
+    def _dpll(
+        self,
+        clauses: Sequence[tuple[int, ...]],
+        assignment: dict[int, bool],
+        num_vars: int,
+        stats: dict[str, int],
+    ) -> dict[int, bool] | None:
         reduced = self._simplify(clauses, assignment)
         if reduced is None:
             stats["conflicts"] += 1
@@ -113,7 +137,9 @@ class DPLLSolver:
         assignment.pop(var, None)
         return None
 
-    def _simplify(self, clauses: Sequence[tuple[int, ...]], assignment: Mapping[int, bool]) -> list[tuple[int, ...]] | None:
+    def _simplify(
+        self, clauses: Sequence[tuple[int, ...]], assignment: Mapping[int, bool]
+    ) -> list[tuple[int, ...]] | None:
         out: list[tuple[int, ...]] = []
         for clause in clauses:
             undecided: list[int] = []
@@ -136,7 +162,11 @@ class DPLLSolver:
 
 class SATOracleAgent:
     def __init__(self, config_path: str | Path | None = None):
-        cfg_path = Path(config_path) if config_path else Path(__file__).with_name("config.yaml")
+        cfg_path = (
+            Path(config_path)
+            if config_path
+            else Path(__file__).with_name("config.yaml")
+        )
         self.config = self._load_config(cfg_path)
         self.data_dir = Path(self.config["hard_instances_dir"])
         self.model_path = Path(self.config["model_path"])
@@ -179,10 +209,17 @@ class SATOracleAgent:
             clauses, n_vars = self._php(n)
         else:
             raise ValueError(f"Unknown instance_type {instance_type}")
-        instance = SATInstance(instance_type, n_vars, clauses, {"kwargs": kwargs, "created": datetime.now(UTC).isoformat()})
+        instance = SATInstance(
+            instance_type,
+            n_vars,
+            clauses,
+            {"kwargs": kwargs, "created": datetime.now(UTC).isoformat()},
+        )
         cnf_path, meta_path = instance.save(self.data_dir)
         fp = self.fingerprint(instance)
-        (self.data_dir / f"{cnf_path.stem}.fingerprint.json").write_text(json.dumps(asdict(fp), indent=2), encoding="utf-8")
+        (self.data_dir / f"{cnf_path.stem}.fingerprint.json").write_text(
+            json.dumps(asdict(fp), indent=2), encoding="utf-8"
+        )
         instance.metadata["paths"] = {"cnf": str(cnf_path), "meta": str(meta_path)}
         return instance
 
@@ -193,16 +230,37 @@ class SATOracleAgent:
         tmp = self.data_dir / "_tmp_query.cnf"
         tmp.write_text(instance.to_dimacs(), encoding="utf-8")
         try:
-            completed = subprocess.run([cadical, str(tmp)], capture_output=True, text=True, timeout=float(self.config["cadical_timeout_sec"]))
+            completed = subprocess.run(
+                [cadical, str(tmp)],
+                capture_output=True,
+                text=True,
+                timeout=float(self.config["cadical_timeout_sec"]),
+            )
         except subprocess.TimeoutExpired:
-            return SolveResult("TIMEOUT", float(self.config["cadical_timeout_sec"]), 0, 0, 0, None, "cadical")
+            return SolveResult(
+                "TIMEOUT",
+                float(self.config["cadical_timeout_sec"]),
+                0,
+                0,
+                0,
+                None,
+                "cadical",
+            )
         text = completed.stdout + "\n" + completed.stderr
         result = "UNKNOWN"
         if "SATISFIABLE" in text and "UNSATISFIABLE" not in text:
             result = "SAT"
         if "UNSATISFIABLE" in text:
             result = "UNSAT"
-        return SolveResult(result, 0.0, self._stat(text, "conflicts"), self._stat(text, "decisions"), self._stat(text, "learned"), None, "cadical")
+        return SolveResult(
+            result,
+            0.0,
+            self._stat(text, "conflicts"),
+            self._stat(text, "decisions"),
+            self._stat(text, "learned"),
+            None,
+            "cadical",
+        )
 
     def fingerprint(self, instance: SATInstance) -> HardnessFingerprint:
         n = instance.num_vars
@@ -220,9 +278,27 @@ class SATOracleAgent:
         backbone = self._backbone_fraction(instance)
         pebbling_lb = math.log2(1 + max(non_zero, default=0))
         vsids_var = self._vsids_activity_variance(instance)
-        values = [ratio, mean_deg, std_deg, clustering, spectral_gap, backbone, pebbling_lb, vsids_var]
+        values = [
+            ratio,
+            mean_deg,
+            std_deg,
+            clustering,
+            spectral_gap,
+            backbone,
+            pebbling_lb,
+            vsids_var,
+        ]
         return HardnessFingerprint(
-            ["clause_var_ratio", "degree_mean", "degree_std", "clustering", "spectral_gap", "backbone_fraction", "resolution_lb_est", "vsids_variance"],
+            [
+                "clause_var_ratio",
+                "degree_mean",
+                "degree_std",
+                "clustering",
+                "spectral_gap",
+                "backbone_fraction",
+                "resolution_lb_est",
+                "vsids_variance",
+            ],
             [float(v) for v in values],
             {"num_clauses": m, "num_vars": n},
         )
@@ -237,14 +313,28 @@ class SATOracleAgent:
         return HardnessPrediction(float(score), label, "mlp-fallback")
 
     def handle_message(self, message: Mapping[str, Any]) -> dict[str, Any]:
-        required = {"from_agent", "to_agent", "message_type", "payload", "confidence", "citations", "lean_verified", "timestamp", "session_id"}
+        required = {
+            "from_agent",
+            "to_agent",
+            "message_type",
+            "payload",
+            "confidence",
+            "citations",
+            "lean_verified",
+            "timestamp",
+            "session_id",
+        }
         missing = sorted(required - set(message))
         if missing:
             raise ValueError(f"Message missing required fields: {missing}")
         kind = str(message["message_type"])
         payload = dict(message["payload"])
         if kind == "query" and payload.get("action") == "generate":
-            instance = self.generate(str(payload["instance_type"]), int(payload["n_vars"]), **payload.get("kwargs", {}))
+            instance = self.generate(
+                str(payload["instance_type"]),
+                int(payload["n_vars"]),
+                **payload.get("kwargs", {}),
+            )
             data = asdict(instance)
         elif kind == "query" and payload.get("action") == "solve":
             inst = SATInstance(**payload["instance"])
@@ -272,7 +362,9 @@ class SATOracleAgent:
             clauses.append(tuple(v if rng.random() < 0.5 else -v for v in vars_))
         return clauses
 
-    def _planted_sat(self, n_vars: int, ratio: float, backbone: float) -> list[tuple[int, ...]]:
+    def _planted_sat(
+        self, n_vars: int, ratio: float, backbone: float
+    ) -> list[tuple[int, ...]]:
         rng = random.Random(int(self.config["seed"]) + 7)
         planted = {i: rng.random() < 0.5 for i in range(1, n_vars + 1)}
         frozen = set(rng.sample(list(planted), int(backbone * n_vars)))
@@ -307,15 +399,21 @@ class SATOracleAgent:
                     for z in (0, 1):
                         if (x ^ y ^ z) == rhs:
                             continue
-                        clause = (a if x == 0 else -a, b if y == 0 else -b, c if z == 0 else -c)
+                        clause = (
+                            a if x == 0 else -a,
+                            b if y == 0 else -b,
+                            c if z == 0 else -c,
+                        )
                         clauses.append(clause)
         return clauses, len(edges)
 
     def _php(self, n: int) -> tuple[list[tuple[int, ...]], int]:
         pigeons = n + 1
         num_vars = pigeons * n
+
         def var(p: int, h: int) -> int:
             return p * n + h + 1
+
         clauses: list[tuple[int, ...]] = []
         for p in range(pigeons):
             clauses.append(tuple(var(p, h) for h in range(n)))
@@ -399,9 +497,13 @@ class SATOracleAgent:
         norm = sum(abs(m) for m in means) + 1e-9
         self._model_weights = [target * m / norm for m in means]
         self.model_path.parent.mkdir(parents=True, exist_ok=True)
-        self.model_path.write_text(json.dumps({"weights": self._model_weights}), encoding="utf-8")
+        self.model_path.write_text(
+            json.dumps({"weights": self._model_weights}), encoding="utf-8"
+        )
 
-    def _satisfies(self, clauses: Sequence[tuple[int, ...]], assignment: Mapping[int, bool]) -> bool:
+    def _satisfies(
+        self, clauses: Sequence[tuple[int, ...]], assignment: Mapping[int, bool]
+    ) -> bool:
         for clause in clauses:
             if not any(assignment.get(abs(l), False) == (l > 0) for l in clause):
                 return False
@@ -410,7 +512,12 @@ class SATOracleAgent:
     def _find_cadical(self) -> str | None:
         for candidate in ("cadical", "./cadical"):
             try:
-                subprocess.run([candidate, "--version"], capture_output=True, timeout=1, check=False)
+                subprocess.run(
+                    [candidate, "--version"],
+                    capture_output=True,
+                    timeout=1,
+                    check=False,
+                )
                 return candidate
             except (FileNotFoundError, subprocess.TimeoutExpired):
                 continue

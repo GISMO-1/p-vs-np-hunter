@@ -8,9 +8,9 @@ References:
 - Williams, R. (2011), non-uniform ACC lower bounds via SAT algorithms.
 """
 
+import json
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
-import json
 from pathlib import Path
 from typing import Any, Iterable, Mapping
 from urllib import request
@@ -49,7 +49,13 @@ class ConjectureTemplateEngine:
 
     classes = ["AC0", "ACC0", "TC0", "NC1", "monotone", "P/poly"]
     functions = ["parity", "majority", "clique", "independent set", "PHP"]
-    techniques = ["random restriction", "gate elimination", "sunflower", "approximation method", "polynomial method"]
+    techniques = [
+        "random restriction",
+        "gate elimination",
+        "sunflower",
+        "approximation method",
+        "polynomial method",
+    ]
 
     def __init__(self) -> None:
         self._known_true = {
@@ -77,11 +83,16 @@ class ConjectureTemplateEngine:
         seed = str((context or {}).get("session", "s"))
         for c_name in self.classes:
             for fn_name in self.functions:
-                if (c_name, fn_name) in self._known_true or (c_name, fn_name) in self._known_false:
+                if (c_name, fn_name) in self._known_true or (
+                    c_name,
+                    fn_name,
+                ) in self._known_false:
                     continue
                 if c_name == "AC0" and fn_name == "majority":
                     continue
-                technique = self.techniques[(len(c_name) + len(fn_name)) % len(self.techniques)]
+                technique = self.techniques[
+                    (len(c_name) + len(fn_name)) % len(self.techniques)
+                ]
                 for idx, template in enumerate(self._template_texts):
                     safe_class = c_name.lower().replace("/", "-")
                     safe_fn = fn_name.replace(" ", "-").replace("/", "-")
@@ -100,7 +111,11 @@ class ConjectureTemplateEngine:
                             f"Template-synthesized conjecture connecting {fn_name} hardness to {c_name}."
                         ),
                         motivation="Template synthesis over known circuit classes/functions/techniques.",
-                        related_results=["Hastad-1986", "Razborov-1985", "Williams-2011"],
+                        related_results=[
+                            "Hastad-1986",
+                            "Razborov-1985",
+                            "Williams-2011",
+                        ],
                         falsification_path="Search for small-n counterexamples or known-inclusion proofs.",
                         implication_if_true="Progress on explicit lower bounds near P vs NP frontiers.",
                         small_case_testable=idx in (0, 1),
@@ -117,7 +132,11 @@ class ConjectureTemplateEngine:
 
     def _score(self, conjecture: Conjecture) -> float:
         novelty = 1.0 if "barrier does NOT apply" in conjecture.statement else 0.7
-        pvsnp = 1.0 if any(x in conjecture.statement for x in ["ACC0", "P/poly", "2^n"]) else 0.6
+        pvsnp = (
+            1.0
+            if any(x in conjecture.statement for x in ["ACC0", "P/poly", "2^n"])
+            else 0.6
+        )
         testability = 1.0 if conjecture.small_case_testable else 0.4
         return 0.4 * novelty + 0.35 * pvsnp + 0.25 * testability
 
@@ -125,7 +144,12 @@ class ConjectureTemplateEngine:
 class ConjectureMiner:
     """Mine local datasets for gaps, patterns, and finite-n generalization leads."""
 
-    def __init__(self, lower_bounds_dir: Path, circuit_families_dir: Path, hard_instances_dir: Path):
+    def __init__(
+        self,
+        lower_bounds_dir: Path,
+        circuit_families_dir: Path,
+        hard_instances_dir: Path,
+    ):
         self.lower_bounds_dir = lower_bounds_dir
         self.circuit_families_dir = circuit_families_dir
         self.hard_instances_dir = hard_instances_dir
@@ -152,7 +176,11 @@ class ConjectureMiner:
 
     def _gap_conjectures(self) -> list[Conjecture]:
         records = self._read_jsonl_or_json(self.lower_bounds_dir)
-        classes = {str(r.get("circuit_class", "")): r for r in records if r.get("circuit_class")}
+        classes = {
+            str(r.get("circuit_class", "")): r
+            for r in records
+            if r.get("circuit_class")
+        }
         if "AC0" in classes and "TC0" in classes and "ACC0" not in classes:
             return [
                 Conjecture(
@@ -174,7 +202,11 @@ class ConjectureMiner:
         families = self._read_jsonl_or_json(self.circuit_families_dir)
         if not families:
             return []
-        samples = [f for f in families if isinstance(f.get("n"), int) and f.get("bound_holds") is True]
+        samples = [
+            f
+            for f in families
+            if isinstance(f.get("n"), int) and f.get("bound_holds") is True
+        ]
         if len(samples) >= 4:
             ns = sorted(int(s["n"]) for s in samples)[:5]
             return [
@@ -195,7 +227,12 @@ class ConjectureMiner:
 
     def _anomaly_conjectures(self) -> list[Conjecture]:
         instances = self._read_jsonl_or_json(self.hard_instances_dir)
-        hard = [x for x in instances if float(x.get("observed_hardness", 0.0)) > float(x.get("predicted_hardness", 1.0))]
+        hard = [
+            x
+            for x in instances
+            if float(x.get("observed_hardness", 0.0))
+            > float(x.get("predicted_hardness", 1.0))
+        ]
         if not hard:
             return []
         return [
@@ -226,7 +263,9 @@ class OllamaConjectureGenerator:
         if not self.enabled:
             return []
         response = self._call_ollama(context or {})
-        conjectures_raw = response.get("conjectures", []) if isinstance(response, dict) else []
+        conjectures_raw = (
+            response.get("conjectures", []) if isinstance(response, dict) else []
+        )
         out: list[Conjecture] = []
         for idx, item in enumerate(conjectures_raw):
             if not isinstance(item, dict):
@@ -237,7 +276,11 @@ class OllamaConjectureGenerator:
                     statement=str(item.get("statement", "")),
                     informal_description=str(item.get("informal_description", "")),
                     motivation=str(item.get("motivation", "")),
-                    related_results=[str(x) for x in item.get("related_results", []) if isinstance(x, str)],
+                    related_results=[
+                        str(x)
+                        for x in item.get("related_results", [])
+                        if isinstance(x, str)
+                    ],
                     falsification_path=str(item.get("falsification_path", "")),
                     implication_if_true=str(item.get("implication_if_true", "")),
                     small_case_testable=bool(item.get("small_case_testable", True)),
@@ -249,12 +292,17 @@ class OllamaConjectureGenerator:
 
     def _call_ollama(self, context: Mapping[str, Any]) -> dict[str, Any]:
         prompt = (
-            "Return JSON object {\"conjectures\": [...]} with formal complexity conjectures. "
+            'Return JSON object {"conjectures": [...]} with formal complexity conjectures. '
             "Each item must include id, statement, informal_description, motivation, related_results, "
             "falsification_path, implication_if_true, small_case_testable, confidence_prior. "
             f"Context: {json.dumps(context)}"
         )
-        payload = {"model": self.model, "stream": False, "prompt": prompt, "format": "json"}
+        payload = {
+            "model": self.model,
+            "stream": False,
+            "prompt": prompt,
+            "format": "json",
+        }
         req = request.Request(
             f"{self.host}/api/generate",
             data=json.dumps(payload).encode("utf-8"),
@@ -264,7 +312,9 @@ class OllamaConjectureGenerator:
         try:
             with request.urlopen(req, timeout=5) as resp:
                 raw = json.loads(resp.read().decode("utf-8"))
-                response_text = raw.get("response", "{}") if isinstance(raw, dict) else "{}"
+                response_text = (
+                    raw.get("response", "{}") if isinstance(raw, dict) else "{}"
+                )
                 parsed = json.loads(response_text)
                 return parsed if isinstance(parsed, dict) else {}
         except Exception:
@@ -273,7 +323,11 @@ class OllamaConjectureGenerator:
 
 class ConjectureEngineAgent:
     def __init__(self, config_path: str | Path | None = None):
-        self.config = self._load_config(Path(config_path) if config_path else Path(__file__).with_name("config.yaml"))
+        self.config = self._load_config(
+            Path(config_path)
+            if config_path
+            else Path(__file__).with_name("config.yaml")
+        )
         self.template_engine = ConjectureTemplateEngine()
         self.miner = ConjectureMiner(
             Path(self.config.get("lower_bounds_dir", "data/lower_bounds")),
@@ -313,12 +367,21 @@ class ConjectureEngineAgent:
 
     def test(self, conjecture: Conjecture) -> ConjectureTestResult:
         if not conjecture.small_case_testable:
-            return ConjectureTestResult(conjecture.id, False, False, [], None, conjecture.confidence_history[-1])
+            return ConjectureTestResult(
+                conjecture.id, False, False, [], None, conjecture.confidence_history[-1]
+            )
         tested_n = [2, 3, 4, 5]
-        falsified = "false" in conjecture.statement.lower() or "p=np" in conjecture.statement.lower()
+        falsified = (
+            "false" in conjecture.statement.lower()
+            or "p=np" in conjecture.statement.lower()
+        )
         supported = False
         counterexample: str | None = None
-        if not falsified and "parity" in conjecture.statement.lower() and "ac0" in conjecture.statement.lower():
+        if (
+            not falsified
+            and "parity" in conjecture.statement.lower()
+            and "ac0" in conjecture.statement.lower()
+        ):
             res = self.hunter.hunt(CircuitModel(CircuitClass.AC0, 20, 4), "parity")
             supported = "exp(Omega" in res.bound_value
         if falsified:
@@ -332,18 +395,26 @@ class ConjectureEngineAgent:
             new_conf = max(0.05, conjecture.confidence_history[-1] - 0.1)
         conjecture.confidence_history.append(new_conf)
         self._save(conjecture)
-        return ConjectureTestResult(conjecture.id, supported, falsified, tested_n, counterexample, new_conf)
+        return ConjectureTestResult(
+            conjecture.id, supported, falsified, tested_n, counterexample, new_conf
+        )
 
     def rank(self) -> list[Conjecture]:
         def score(conjecture: Conjecture) -> tuple[float, float, float, str]:
             depth = 1.0 if "nexp" in conjecture.statement.lower() else 0.6
             tractability = 0.8 if conjecture.small_case_testable else 0.3
-            support = conjecture.confidence_history[-1] if conjecture.confidence_history else conjecture.confidence_prior
+            support = (
+                conjecture.confidence_history[-1]
+                if conjecture.confidence_history
+                else conjecture.confidence_prior
+            )
             pvsnp = 1.0 if "np" in conjecture.statement.lower() else 0.4
             total = 0.35 * depth + 0.25 * tractability + 0.2 * support + 0.2 * pvsnp
             return (total, support, tractability, conjecture.id)
 
-        return sorted((c for c in self._active if c.status == "active"), key=score, reverse=True)
+        return sorted(
+            (c for c in self._active if c.status == "active"), key=score, reverse=True
+        )
 
     def handle_message(self, msg: Mapping[str, Any]) -> dict[str, Any]:
         required = {

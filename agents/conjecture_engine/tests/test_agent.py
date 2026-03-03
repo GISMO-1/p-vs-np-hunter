@@ -3,7 +3,12 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from agents.conjecture_engine.agent import ConjectureEngineAgent, ConjectureMiner, ConjectureTemplateEngine, OllamaConjectureGenerator
+from agents.conjecture_engine.agent import (
+    ConjectureEngineAgent,
+    ConjectureMiner,
+    ConjectureTemplateEngine,
+    OllamaConjectureGenerator,
+)
 
 
 def _write(path: Path, payload: dict[str, object]) -> None:
@@ -39,14 +44,20 @@ def test_template_generation_produces_valid_conjectures() -> None:
 
 def test_miner_finds_acc0_gap(tmp_path: Path) -> None:
     _write(tmp_path / "lower" / "ac0.json", {"circuit_class": "AC0", "bound": "exp"})
-    _write(tmp_path / "lower" / "tc0.json", {"circuit_class": "TC0", "bound": "superpoly"})
-    miner = ConjectureMiner(tmp_path / "lower", tmp_path / "circuits", tmp_path / "hard")
+    _write(
+        tmp_path / "lower" / "tc0.json", {"circuit_class": "TC0", "bound": "superpoly"}
+    )
+    miner = ConjectureMiner(
+        tmp_path / "lower", tmp_path / "circuits", tmp_path / "hard"
+    )
     out = miner.mine()
     assert any(c.id == "miner-gap-acc0" for c in out)
 
 
 def test_ollama_fallback_when_unavailable() -> None:
-    ollama = OllamaConjectureGenerator("http://localhost:65535", "deepseek-r1", enabled=True)
+    ollama = OllamaConjectureGenerator(
+        "http://localhost:65535", "deepseek-r1", enabled=True
+    )
     out = ollama.propose({"goal": "test"})
     assert out == []
 

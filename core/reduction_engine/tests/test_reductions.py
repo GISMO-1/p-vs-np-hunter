@@ -2,10 +2,9 @@ from __future__ import annotations
 
 import random
 import time
-
-from agents.sat_oracle.agent import DPLLSolver, SATInstance
 from typing import cast
 
+from agents.sat_oracle.agent import DPLLSolver, SATInstance
 from core.reduction_engine.reductions import (
     ReductionChain,
     sat_to_3sat,
