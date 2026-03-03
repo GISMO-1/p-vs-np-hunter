@@ -1,0 +1,8 @@
+exhaustive_variable_limit: 16
+truth_table_limit: 20
+symmetry_exact_limit: 8
+switching_check_variable_limit: 10
+switching_check_p: 0.1
+pruned_candidate_budget: 128
+gate_elimination_keep_ratio: 0.9
+output_dir: data/circuit_families
