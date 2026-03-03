@@ -135,8 +135,7 @@ We are not here to approximate. We are here to prove.
 
 ## 📜 License
 
-MIT — because if we crack P vs NP, the whole world should benefit.
-
+Apache 2.0
 ---
 
 ## 🤝 Contributing
