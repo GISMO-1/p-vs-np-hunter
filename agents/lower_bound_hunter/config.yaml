@@ -1,0 +1,2 @@
+lower_bound_db_dir: data/lower_bounds
+validation_depth: 3
