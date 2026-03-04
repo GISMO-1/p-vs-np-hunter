@@ -1,13 +1,40 @@
 {
   "nodes": {
     "williams_pipeline": {
-      "attempts": 6,
+      "attempts": 16,
       "successes": 0,
       "barrier_hit_count": {
-        "unknown": 6
+        "unknown": 16
       },
       "success_rate": 0.0,
-      "last_attempted": "2026-03-04T06:28:27.228006+00:00"
+      "last_attempted": "2026-03-04T07:09:58.657154+00:00"
+    },
+    "gate_elimination": {
+      "attempts": 4,
+      "successes": 0,
+      "barrier_hit_count": {
+        "unknown": 4
+      },
+      "success_rate": 0.0,
+      "last_attempted": "2026-03-04T07:09:33.818599+00:00"
+    },
+    "random_restriction": {
+      "attempts": 2,
+      "successes": 0,
+      "barrier_hit_count": {
+        "unknown": 2
+      },
+      "success_rate": 0.0,
+      "last_attempted": "2026-03-04T07:09:42.120777+00:00"
+    },
+    "monotone_lower_bound": {
+      "attempts": 4,
+      "successes": 0,
+      "barrier_hit_count": {
+        "unknown": 4
+      },
+      "success_rate": 0.0,
+      "last_attempted": "2026-03-04T07:09:50.552349+00:00"
     }
   },
   "edges": []

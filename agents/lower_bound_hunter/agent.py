@@ -97,7 +97,10 @@ class WilliamsPipeline:
         if cls == CircuitClass.AC0:
             return (0.92, "depth-reduction + random restrictions SAT (AC0 baseline)")
         if cls == CircuitClass.ACC0:
-            return (0.99, "polynomial decomposition + ACC0-SAT speedup (Williams-style)")
+            return (
+                0.99,
+                "polynomial decomposition + ACC0-SAT speedup (Williams-style)",
+            )
         if cls == CircuitClass.MONOTONE:
             return (1.0, "brute-force baseline")
         return (1.0, "unknown")
@@ -294,7 +297,9 @@ class SmolenskyBoundChecker:
 class LowerBoundHunterAgent:
     def __init__(self, config_path: str | Path | None = None):
         self.config = self._load_config(
-            Path(config_path) if config_path else Path(__file__).with_name("config.yaml")
+            Path(config_path)
+            if config_path
+            else Path(__file__).with_name("config.yaml")
         )
         self.pipeline = WilliamsPipeline()
         self.gate_elimination = GateEliminationEngine()
@@ -303,11 +308,18 @@ class LowerBoundHunterAgent:
         self.polynomial = PolynomialApproximator()
         self.degree_estimator = DegreeComplexityEstimator(self.polynomial)
         self.smolensky_checker = SmolenskyBoundChecker()
-        self.known_lower_bounds = self._load_known_lower_bounds(Path("data/lower_bounds"))
+        self.known_lower_bounds = self._load_known_lower_bounds(
+            Path("data/lower_bounds")
+        )
         self.db_dir = Path(self.config["lower_bound_db_dir"])
         self.db_dir.mkdir(parents=True, exist_ok=True)
 
-    def hunt(self, circuit_class: CircuitModel, target_function: str, technique: str = "williams_pipeline") -> LowerBoundResult:
+    def hunt(
+        self,
+        circuit_class: CircuitModel,
+        target_function: str,
+        technique: str = "williams_pipeline",
+    ) -> LowerBoundResult:
         technique_key = technique.lower().strip()
         if technique_key == "gate_elimination":
             result = self._hunt_gate_elimination(circuit_class, target_function)
@@ -323,7 +335,9 @@ class LowerBoundHunterAgent:
         self._store_result(result)
         return result
 
-    def _hunt_gate_elimination(self, circuit_class: CircuitModel, target_function: str) -> LowerBoundResult:
+    def _hunt_gate_elimination(
+        self, circuit_class: CircuitModel, target_function: str
+    ) -> LowerBoundResult:
         func = target_function.lower()
         n = max(2, circuit_class.max_size)
         if func in {"parity", "xor", "majority"}:
@@ -343,16 +357,25 @@ class LowerBoundHunterAgent:
             )
         return self.pipeline.run(circuit_class.cls, target_function)
 
-    def _hunt_random_restriction(self, circuit_class: CircuitModel, target_function: str) -> LowerBoundResult:
+    def _hunt_random_restriction(
+        self, circuit_class: CircuitModel, target_function: str
+    ) -> LowerBoundResult:
         base = self.pipeline.run(circuit_class.cls, target_function)
-        if circuit_class.cls == CircuitClass.AC0 and target_function.lower() in {"parity", "xor"}:
-            base.bound_value = self.restrictions.parity_ac0_bound(circuit_class.max_depth)
+        if circuit_class.cls == CircuitClass.AC0 and target_function.lower() in {
+            "parity",
+            "xor",
+        }:
+            base.bound_value = self.restrictions.parity_ac0_bound(
+                circuit_class.max_depth
+            )
             base.method = "random_restriction"
             base.algorithm_used = "hastad_switching_lemma"
             base.citations.append("Hastad-1986")
         return base
 
-    def _hunt_monotone(self, circuit_class: CircuitModel, target_function: str) -> LowerBoundResult:
+    def _hunt_monotone(
+        self, circuit_class: CircuitModel, target_function: str
+    ) -> LowerBoundResult:
         if target_function.lower() in {"clique", "independent_set"}:
             result = self.monotone.clique_bound()
             result.function = target_function
@@ -360,7 +383,9 @@ class LowerBoundHunterAgent:
             return result
         return self.pipeline.run(circuit_class.cls, target_function)
 
-    def _hunt_polynomial_method(self, circuit_class: CircuitModel, target_function: str) -> LowerBoundResult:
+    def _hunt_polynomial_method(
+        self, circuit_class: CircuitModel, target_function: str
+    ) -> LowerBoundResult:
         n = min(8, max(2, circuit_class.max_size // 4))
         degrees = self.degree_estimator.estimate(target_function, n)
         gf2 = degrees["GF2"]
@@ -386,8 +411,16 @@ class LowerBoundHunterAgent:
         )
 
     def validate_known_results(self) -> ValidationReport:
-        parity = self.hunt(CircuitModel(CircuitClass.AC0, max_size=32, max_depth=3), "parity", technique="random_restriction")
-        clique = self.hunt(CircuitModel(CircuitClass.MONOTONE, max_size=64, max_depth=6), "clique", technique="monotone_lower_bound")
+        parity = self.hunt(
+            CircuitModel(CircuitClass.AC0, max_size=32, max_depth=3),
+            "parity",
+            technique="random_restriction",
+        )
+        clique = self.hunt(
+            CircuitModel(CircuitClass.MONOTONE, max_size=64, max_depth=6),
+            "clique",
+            technique="monotone_lower_bound",
+        )
         checks = {
             "ac0_parity": "exp(Omega" in parity.bound_value,
             "monotone_clique": "superpolynomial" in clique.bound_value,
@@ -417,14 +450,32 @@ class LowerBoundHunterAgent:
         }
 
     def handle_message(self, msg: Mapping[str, Any]) -> dict[str, Any]:
-        required = {"from_agent", "to_agent", "message_type", "payload", "confidence", "citations", "lean_verified", "timestamp", "session_id"}
+        required = {
+            "from_agent",
+            "to_agent",
+            "message_type",
+            "payload",
+            "confidence",
+            "citations",
+            "lean_verified",
+            "timestamp",
+            "session_id",
+        }
         missing = sorted(required - set(msg))
         if missing:
             raise ValueError(f"Message missing required fields: {missing}")
         payload = dict(msg["payload"])
         if msg["message_type"] == "query" and payload.get("action") == "hunt":
             cls = CircuitClass(payload.get("circuit_class", "AC0"))
-            result = self.hunt(CircuitModel(cls, int(payload.get("max_size", 16)), int(payload.get("max_depth", 3))), str(payload.get("target_function", "parity")), technique=str(payload.get("technique", "williams_pipeline")))
+            result = self.hunt(
+                CircuitModel(
+                    cls,
+                    int(payload.get("max_size", 16)),
+                    int(payload.get("max_depth", 3)),
+                ),
+                str(payload.get("target_function", "parity")),
+                technique=str(payload.get("technique", "williams_pipeline")),
+            )
             response_payload: dict[str, Any] = asdict(result)
         else:
             response_payload = {"status": "unsupported"}
@@ -454,12 +505,19 @@ class LowerBoundHunterAgent:
             "lean_ready": result.lean_ready,
         }
         stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%S%f")
-        path = self.db_dir / f"{result.circuit_class.lower()}_{result.function.lower()}_{stamp}.json"
+        path = (
+            self.db_dir
+            / f"{result.circuit_class.lower()}_{result.function.lower()}_{stamp}.json"
+        )
         path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
         return path
 
     def _is_known_result(self, result: LowerBoundResult) -> bool:
-        key = (result.circuit_class.lower(), result.function.lower(), result.method.lower())
+        key = (
+            result.circuit_class.lower(),
+            result.function.lower(),
+            result.method.lower(),
+        )
         prior = self.known_lower_bounds.get(key)
         if prior is None:
             return False
@@ -469,7 +527,9 @@ class LowerBoundHunterAgent:
             return False
         return len(new) <= len(old)
 
-    def _load_known_lower_bounds(self, directory: Path) -> dict[tuple[str, str, str], dict[str, Any]]:
+    def _load_known_lower_bounds(
+        self, directory: Path
+    ) -> dict[tuple[str, str, str], dict[str, Any]]:
         known: dict[tuple[str, str, str], dict[str, Any]] = {}
         if not directory.exists():
             return known

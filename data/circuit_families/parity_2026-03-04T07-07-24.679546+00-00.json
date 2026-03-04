@@ -1,0 +1,35 @@
+{
+  "function_name": "parity",
+  "output_path": "",
+  "records": [
+    {
+      "depth": null,
+      "minimum_size_found": null,
+      "model": "AC0",
+      "structural_invariants": {
+        "depth_size_tradeoff": {},
+        "gate_elimination_candidates": [],
+        "locality_score": 0.0,
+        "symmetry_group_size": 6
+      },
+      "switching_lemma_check": null,
+      "witness_expression": null
+    }
+  ],
+  "timestamp": "2026-03-04T07:07:24.679546+00:00",
+  "truth_table": {
+    "000": false,
+    "001": true,
+    "010": true,
+    "011": false,
+    "100": true,
+    "101": false,
+    "110": false,
+    "111": true
+  },
+  "variable_names": [
+    "x0",
+    "x1",
+    "x2"
+  ]
+}

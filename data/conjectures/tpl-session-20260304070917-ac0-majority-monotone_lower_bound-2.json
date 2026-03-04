@@ -1,0 +1,19 @@
+{
+  "id": "tpl-session-20260304070917-ac0-majority-monotone_lower_bound-2",
+  "statement": "The monotone_lower_bound barrier does NOT apply to AC0 because its combinatorial measure is non-natural in the Razborov-Rudich sense.",
+  "informal_description": "Template-synthesized conjecture connecting majority hardness to AC0 via monotone_lower_bound.",
+  "motivation": "Template synthesis over known circuit classes/functions/techniques.",
+  "related_results": [
+    "Hastad-1986",
+    "Razborov-1985",
+    "Williams-2011"
+  ],
+  "falsification_path": "Search for small-n counterexamples or known-inclusion proofs.",
+  "implication_if_true": "Progress on explicit lower bounds near P vs NP frontiers.",
+  "small_case_testable": false,
+  "confidence_prior": 0.35,
+  "confidence_history": [
+    0.35
+  ],
+  "status": "active"
+}

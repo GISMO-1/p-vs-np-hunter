@@ -1,24 +1,36 @@
 {
-  "total_proof_attempts": 12,
+  "total_proof_attempts": 52,
   "success_rate": 0.0,
   "techniques_tried_per_circuit_class": {
-    "unknown": [
-      "unknown"
+    "AC0": [
+      "gate_elimination",
+      "monotone_lower_bound",
+      "random_restriction",
+      "williams_pipeline"
+    ],
+    "MONOTONE": [
+      "monotone_lower_bound"
+    ],
+    "ACC0": [
+      "gate_elimination",
+      "monotone_lower_bound",
+      "random_restriction",
+      "williams_pipeline"
     ]
   },
   "conjectures": {
-    "active": 0,
+    "active": 10,
     "falsified": 0,
     "verified": 0
   },
   "lower_bounds": {
-    "known_reproduced": 0,
+    "known_reproduced": 10,
     "candidate_new_results": 0
   },
   "lean_verifications": {
     "verified": 0,
     "failed": 0,
-    "pending": 12
+    "pending": 52
   },
   "estimated_distance_to_publishable_result": "high"
 }

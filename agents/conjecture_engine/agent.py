@@ -405,7 +405,9 @@ class ConjectureEngineAgent:
             outcome = "passed" if case_passed else "failed"
             print(f"conjecture {conjecture.id} {outcome} n={n_vars} case")
             if case_passed:
-                conjecture.confidence_prior = min(0.99, conjecture.confidence_prior + 0.1)
+                conjecture.confidence_prior = min(
+                    0.99, conjecture.confidence_prior + 0.1
+                )
                 conjecture.confidence_history.append(conjecture.confidence_prior)
                 continue
             supported = False
@@ -430,7 +432,9 @@ class ConjectureEngineAgent:
             conjecture.confidence_history[-1],
         )
 
-    def _test_small_case(self, conjecture: Conjecture, n_vars: int) -> tuple[bool, str | None]:
+    def _test_small_case(
+        self, conjecture: Conjecture, n_vars: int
+    ) -> tuple[bool, str | None]:
         statement = conjecture.statement.lower()
         fn_name = self._extract_function_name(statement)
         cls = self._extract_circuit_class(statement)
@@ -458,7 +462,14 @@ class ConjectureEngineAgent:
         return True, None
 
     def _extract_function_name(self, statement: str) -> str | None:
-        for fn_name in ["parity", "majority", "clique", "independent_set", "php", "xor"]:
+        for fn_name in [
+            "parity",
+            "majority",
+            "clique",
+            "independent_set",
+            "php",
+            "xor",
+        ]:
             if fn_name in statement:
                 return fn_name
         return None
@@ -483,14 +494,18 @@ class ConjectureEngineAgent:
         if fn_name in {"parity", "xor"}:
             evaluator = lambda a: sum(int(a[name]) for name in names) % 2 == 1
         elif fn_name == "majority":
-            evaluator = lambda a: sum(int(a[name]) for name in names) >= (n_vars // 2 + 1)
+            evaluator = lambda a: sum(int(a[name]) for name in names) >= (
+                n_vars // 2 + 1
+            )
         elif fn_name == "clique":
             evaluator = lambda a: all(bool(a[name]) for name in names)
         elif fn_name == "independent_set":
             evaluator = lambda a: sum(int(a[name]) for name in names) <= 1
         else:
             evaluator = lambda a: sum(int(a[name]) for name in names) == 0
-        return BooleanFunction(name=f"{fn_name}_{n_vars}", variable_names=names, evaluator=evaluator)
+        return BooleanFunction(
+            name=f"{fn_name}_{n_vars}", variable_names=names, evaluator=evaluator
+        )
 
     def rank(self) -> list[Conjecture]:
         def score(conjecture: Conjecture) -> tuple[float, float, float, str]:

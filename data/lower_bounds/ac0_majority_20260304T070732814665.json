@@ -1,0 +1,15 @@
+{
+  "function": "majority",
+  "circuit_class": "AC0",
+  "bound_type": "size",
+  "bound_value": "formula size >= 32",
+  "method": "gate_elimination",
+  "known_result": true,
+  "proof_sketch": "Gate elimination removes at most one relevant variable per gate; n variables force n-1 gates.",
+  "confidence": 0.8,
+  "citations": [
+    "Paul-1977",
+    "Schnorr-1976"
+  ],
+  "lean_ready": false
+}

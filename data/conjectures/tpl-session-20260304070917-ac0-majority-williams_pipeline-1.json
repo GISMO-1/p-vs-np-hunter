@@ -1,0 +1,19 @@
+{
+  "id": "tpl-session-20260304070917-ac0-majority-williams_pipeline-1",
+  "statement": "If williams_pipeline applies to AC0, then majority \u2209 AC0.",
+  "informal_description": "Template-synthesized conjecture connecting majority hardness to AC0 via williams_pipeline.",
+  "motivation": "Template synthesis over known circuit classes/functions/techniques.",
+  "related_results": [
+    "Hastad-1986",
+    "Razborov-1985",
+    "Williams-2011"
+  ],
+  "falsification_path": "Search for small-n counterexamples or known-inclusion proofs.",
+  "implication_if_true": "Progress on explicit lower bounds near P vs NP frontiers.",
+  "small_case_testable": true,
+  "confidence_prior": 0.35,
+  "confidence_history": [
+    0.35
+  ],
+  "status": "active"
+}

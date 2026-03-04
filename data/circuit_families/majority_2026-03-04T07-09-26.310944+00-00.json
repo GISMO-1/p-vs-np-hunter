@@ -1,0 +1,42 @@
+{
+  "function_name": "majority",
+  "output_path": "",
+  "records": [
+    {
+      "depth": 3,
+      "minimum_size_found": 9,
+      "model": "ACC0",
+      "structural_invariants": {
+        "depth_size_tradeoff": {
+          "3": 9
+        },
+        "gate_elimination_candidates": [],
+        "locality_score": 3.0,
+        "symmetry_group_size": 6
+      },
+      "switching_lemma_check": {
+        "p": 0.1,
+        "t": 3.0,
+        "tail_probability": 0.0010000000000000002,
+        "upper_bound": 3.375
+      },
+      "witness_expression": "MOD2_0(x0,OR(MOD2_0(x0,x1),MOD2_0(x0,x2)))"
+    }
+  ],
+  "timestamp": "2026-03-04T07:09:26.310944+00:00",
+  "truth_table": {
+    "000": false,
+    "001": false,
+    "010": false,
+    "011": true,
+    "100": false,
+    "101": true,
+    "110": true,
+    "111": true
+  },
+  "variable_names": [
+    "x0",
+    "x1",
+    "x2"
+  ]
+}

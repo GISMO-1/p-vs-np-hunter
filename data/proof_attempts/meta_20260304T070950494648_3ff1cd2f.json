@@ -1,0 +1,10 @@
+{
+  "session_id": "session-20260304070917",
+  "type": "conjecture",
+  "source_agent": "conjecture_engine",
+  "id": "tpl-session-20260304070917-ac0-majority-monotone_lower_bound-0",
+  "status": "active",
+  "circuit_class": "ACC0",
+  "technique": "monotone_lower_bound",
+  "lean_verified": false
+}

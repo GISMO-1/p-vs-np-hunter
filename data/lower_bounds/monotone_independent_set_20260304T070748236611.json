@@ -1,0 +1,15 @@
+{
+  "function": "independent_set",
+  "circuit_class": "MONOTONE",
+  "bound_type": "size",
+  "bound_value": "n^(Omega(log n)) (superpolynomial)",
+  "method": "monotone_lower_bound",
+  "known_result": true,
+  "proof_sketch": "Approximate monotone circuits by low-sunflower families and compare acceptance probabilities on random positive/negative graph distributions.",
+  "confidence": 0.95,
+  "citations": [
+    "Razborov-1985",
+    "Erdos-Rado-1960"
+  ],
+  "lean_ready": false
+}

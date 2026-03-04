@@ -1,0 +1,25 @@
+{
+  "input": {
+    "circuit_class": "AC0",
+    "function": "majority",
+    "bound_type": "size",
+    "bound_value": "formula size >= 32",
+    "algorithm_used": "gate_elimination_small_functions",
+    "confidence": 0.8,
+    "proof_sketch": "Gate elimination removes at most one relevant variable per gate; n variables force n-1 gates.",
+    "known_result": true,
+    "method": "gate_elimination",
+    "citations": [
+      "Paul-1977",
+      "Schnorr-1976"
+    ],
+    "lean_ready": false
+  },
+  "translation": {
+    "lean_file_path": "lean\\pvsnp_hunter\\PvsNP\\Attempts\\attempt_majority.lean",
+    "theorem_statement": "theorem attempt_majority : majority_requires_ac0_size_lower_bound := by",
+    "tactics_attempted": [
+      "simpa using placeholder_axiom"
+    ]
+  }
+}

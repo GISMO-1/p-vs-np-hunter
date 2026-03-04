@@ -1,0 +1,15 @@
+{
+  "function": "php",
+  "circuit_class": "ACC0",
+  "bound_type": "size",
+  "bound_value": "NEXP not subset of ACC0 (derived from SAT time 2^(n^0.990) < 2^n)",
+  "method": "williams_pipeline",
+  "known_result": true,
+  "proof_sketch": "Using SAT exponent 2^(n^0.990) for ACC0, apply Williams' inversion: nontrivial satisfiability for the class yields NEXP lower bounds against that class.",
+  "confidence": 0.86,
+  "citations": [
+    "Williams-2011",
+    "Williams-GodelPrize-2024"
+  ],
+  "lean_ready": false
+}

@@ -1,0 +1,10 @@
+{
+  "session_id": "session-20260304070724",
+  "type": "conjecture",
+  "source_agent": "conjecture_engine",
+  "id": "tpl-session-20260304070724-ac0-majority-random_restriction-0",
+  "status": "active",
+  "circuit_class": "AC0",
+  "technique": "random_restriction",
+  "lean_verified": false
+}

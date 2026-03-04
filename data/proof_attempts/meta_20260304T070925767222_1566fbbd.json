@@ -1,0 +1,29 @@
+{
+  "session_id": "session-20260304070917",
+  "type": "lower_bound",
+  "source_agent": "lower_bound_hunter",
+  "lower_bound_result": {
+    "circuit_class": "ACC0",
+    "function": "parity",
+    "bound_type": "size",
+    "bound_value": "NEXP not subset of ACC0 (derived from SAT time 2^(n^0.990) < 2^n)",
+    "algorithm_used": "polynomial decomposition + ACC0-SAT speedup (Williams-style)",
+    "confidence": 0.86,
+    "proof_sketch": "Using SAT exponent 2^(n^0.990) for ACC0, apply Williams' inversion: nontrivial satisfiability for the class yields NEXP lower bounds against that class.",
+    "known_result": true,
+    "method": "williams_pipeline",
+    "citations": [
+      "Williams-2011",
+      "Williams-GodelPrize-2024"
+    ],
+    "lean_ready": false
+  },
+  "status": "draft_valid",
+  "lean_verified": false,
+  "failure_mode": "none",
+  "barrier": "unknown",
+  "circuit_class": "ACC0",
+  "technique": "williams_pipeline",
+  "known_result": true,
+  "function": "parity"
+}
