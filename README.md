@@ -2,6 +2,8 @@
 
 ## Current Status: ALL 6 AGENTS OPERATIONAL
 
+pvsnp-hunter is in a **computational evidence phase — findings documented, formal verification pending**.
+
 pvsnp-hunter is a multi-agent system for circuit lower bounds, conjecture synthesis, and Lean-backed verification in the P vs NP program.
 
 | Agent | Status | Primary Mission |
@@ -12,6 +14,14 @@ pvsnp-hunter is a multi-agent system for circuit lower bounds, conjecture synthe
 | `conjecture_engine` | ✅ Operational | Local + optional LLM conjecture synthesis with falsification pathways |
 | `lean_formalizer` | ✅ Operational | JSON proof-sketch to Lean translation and draft/live verification |
 | `meta_learner` | ✅ Operational | Failure-pattern mining, barrier tagging, and strategy recommendation |
+
+## Findings
+
+See the full report at [`docs/FINDINGS.md`](docs/FINDINGS.md).
+
+- PHP exhibits a finite-window GF(3)/GF(2) degree asymmetry through n≤15, with fitted exponents 1.2079 vs 0.9534 and maximum observed gap 4 (first at n=11).
+- Clique and Independent Set (under corrected graph-edge encoding) show near-linear degree growth in both GF(2) and GF(3) on tested sizes.
+- Majority shows a GF(2) degree plateau at 2 for n=4..15, while GF(3) degree increases to 9 by n=15.
 
 ## Quick Start in 60 Seconds
 
