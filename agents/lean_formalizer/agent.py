@@ -46,10 +46,27 @@ class LibraryEntry:
 
 
 class LeanEnvironment:
-    def __init__(self, project_root: Path):
-        self.project_root = project_root
-        self.mode = "LIVE" if self._lean_available() else "DRAFT"
+    def __init__(self, project_root: Path, lean_available: bool, lean_mode: str):
+        self.project_root = self._detect_project_root(project_root)
+        requested_live = lean_mode.strip().lower() == "live"
+        self.mode = (
+            "LIVE"
+            if (requested_live and lean_available and self._lean_available())
+            else "DRAFT"
+        )
         self._ensure_layout()
+
+    def _detect_project_root(self, candidate: Path) -> Path:
+        options = [candidate, Path("lean/pvsnp_hunter"), Path.cwd() / "lean/pvsnp_hunter"]
+        for option in options:
+            resolved = option.resolve()
+            if (resolved / "lakefile.lean").exists() and (resolved / "PvsNP").exists():
+                return resolved
+        for parent in [Path.cwd(), *Path.cwd().parents]:
+            maybe = parent / "lean" / "pvsnp_hunter"
+            if (maybe / "lakefile.lean").exists() and (maybe / "PvsNP").exists():
+                return maybe.resolve()
+        raise FileNotFoundError("Unable to detect Lean Lake project root at lean/pvsnp_hunter/.")
 
     def _lean_available(self) -> bool:
         return shutil.which("elan") is not None and shutil.which("lake") is not None
@@ -226,16 +243,41 @@ class LeanVerifier:
 
 class LeanFormalizerAgent:
     def __init__(self, config_path: str | Path | None = None):
-        _ = config_path
-        self.project_root = Path("lean/pvsnp_hunter")
-        self.attempts_dir = Path("data/proof_attempts")
+        cfg_path = Path(config_path) if config_path else Path(__file__).with_name("config.yaml")
+        self.config = self._load_config(cfg_path)
+        self.project_root = Path(str(self.config.get("project_root", "lean/pvsnp_hunter")))
+        self.attempts_dir = Path(str(self.config.get("attempts_dir", "data/proof_attempts")))
         self.attempts_dir.mkdir(parents=True, exist_ok=True)
-        self.env = LeanEnvironment(self.project_root)
+        self.env = LeanEnvironment(
+            self.project_root,
+            bool(self.config.get("lean_available", False)),
+            str(self.config.get("lean_mode", "draft")),
+        )
         self.translator = ProofSketchTranslator(self.env)
         self.verifier = LeanVerifier(self.env)
         self.library = LibraryManager(
             self.project_root, Path("data/proof_attempts/library_index.json")
         )
+
+    def _load_config(self, path: Path) -> dict[str, Any]:
+        data: dict[str, Any] = {}
+        for raw in path.read_text(encoding="utf-8").splitlines():
+            line = raw.strip()
+            if not line or line.startswith("#"):
+                continue
+            key, value = [p.strip() for p in line.split(":", 1)]
+            low = value.lower()
+            if low in {"true", "false"}:
+                data[key] = low == "true"
+            else:
+                try:
+                    data[key] = int(value)
+                except ValueError:
+                    try:
+                        data[key] = float(value)
+                    except ValueError:
+                        data[key] = value
+        return data
 
     def formalize(self, result: Mapping[str, Any]) -> TranslationResult:
         translated = self.translator.translate(result)
