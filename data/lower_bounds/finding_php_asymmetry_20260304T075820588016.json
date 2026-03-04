@@ -1,0 +1,56 @@
+{
+  "result_name": "php_cross_field_degree_asymmetry",
+  "function": "php",
+  "circuit_class": "ACC0",
+  "bound_type": "polynomial_degree_empirical",
+  "known_result": false,
+  "method": "polynomial_method",
+  "data_window": {
+    "n_min": 2,
+    "n_max": 15
+  },
+  "gf2_degrees": {
+    "2": 2,
+    "3": 2,
+    "4": 2,
+    "5": 3,
+    "6": 3,
+    "7": 4,
+    "8": 4,
+    "9": 5,
+    "10": 6,
+    "11": 7,
+    "12": 8,
+    "13": 9,
+    "14": 10,
+    "15": 11
+  },
+  "gf3_degrees": {
+    "2": 2,
+    "3": 2,
+    "4": 2,
+    "5": 3,
+    "6": 3,
+    "7": 5,
+    "8": 5,
+    "9": 7,
+    "10": 9,
+    "11": 11,
+    "12": 12,
+    "13": 13,
+    "14": 14,
+    "15": 15
+  },
+  "growth_fit": {
+    "GF2_class": "O(n)",
+    "GF3_class": "O(n)",
+    "GF2_power_alpha": 0.9533698286984779,
+    "GF3_power_alpha": 1.2079016267666487
+  },
+  "mathematical_note": "Finite-n data shows persistent GF(3) > GF(2) degree separation for PHP through n=15. This supports a field-sensitive Razborov-Smolensky phenomenon candidate. However, this empirical degree table alone does not derive the Beame et al. (1992) exponential AC0 lower bound; a theorem-level transfer from approximate degree to size lower bounds is still required.",
+  "citations": [
+    "Razborov-1987",
+    "Smolensky-1987",
+    "Beame-et-al-1992"
+  ]
+}

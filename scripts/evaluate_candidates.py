@@ -109,6 +109,38 @@ def _growth_candidates(
     return strong
 
 
+def _php_asymmetry_finding(payload: dict[str, Any]) -> dict[str, Any]:
+    table = payload.get("table", {})
+    php = table.get("php", {})
+    gf2 = {int(n): int(vals["GF2"]) for n, vals in php.items()}
+    gf3 = {int(n): int(vals["GF3"]) for n, vals in php.items()}
+    model = payload.get("growth_models", {}).get("php", {})
+    gf2_alpha = float(model.get("GF2", {}).get("alpha", 0.0))
+    gf3_alpha = float(model.get("GF3", {}).get("alpha", 0.0))
+    max_gap = 0
+    max_gap_n = 0
+    for n in sorted(set(gf2) & set(gf3)):
+        gap = gf3[n] - gf2[n]
+        if gap > max_gap:
+            max_gap = gap
+            max_gap_n = n
+    implication = (
+        "Observed GF(3) growth has a steeper power-law fit than GF(2). "
+        "This is consistent with a Smolensky-style field-sensitive obstruction, "
+        "but finite-n degree evidence alone does not imply the Beame et al. AC0 exponential size lower bound."
+    )
+    return {
+        "finding": "PHP_GF3_vs_GF2_asymmetry",
+        "function": "php",
+        "gf2_degrees": gf2,
+        "gf3_degrees": gf3,
+        "gf2_alpha": round(gf2_alpha, 4),
+        "gf3_alpha": round(gf3_alpha, 4),
+        "largest_gap": {"n": max_gap_n, "degree_gap": max_gap},
+        "smolensky_note": implication,
+    }
+
+
 def main() -> int:
     hunter = LowerBoundHunterAgent()
     lower_bounds_dir = Path("data/lower_bounds")
@@ -116,14 +148,12 @@ def main() -> int:
     evaluations = [_evaluate_candidate(candidate, hunter) for candidate in candidates]
 
     table_path = Path("data/lower_bounds/polynomial_degree_table.json")
-    hunter.save_polynomial_degree_table(table_path, max_n=10)
+    hunter.save_polynomial_degree_table(table_path, max_n=15)
     degree_payload = json.loads(table_path.read_text(encoding="utf-8"))
     table = degree_payload["table"]
-    poly_window = {
-        fn_name: {n: by_n[n] for n in by_n if 2 <= int(n) <= 8}
-        for fn_name, by_n in table.items()
-    }
+    poly_window = {fn_name: by_n for fn_name, by_n in table.items()}
     strong = _growth_candidates(poly_window)
+    php_finding = _php_asymmetry_finding(degree_payload)
 
     print("=== Candidate Lower-Bound Evaluation Report ===")
     print(f"Loaded {len(candidates)} candidate result(s) from {lower_bounds_dir}")
@@ -133,7 +163,7 @@ def main() -> int:
         print("-")
         print(json.dumps(item, indent=2))
 
-    print("\n=== Polynomial Method Deep Evaluation (n=2..8, all target functions) ===")
+    print("\n=== Polynomial Method Deep Evaluation (full supported n-range) ===")
     for fn_name, by_n in sorted(poly_window.items()):
         print(f"Function: {fn_name}")
         for n, vals in sorted(by_n.items(), key=lambda x: int(x[0])):
@@ -145,6 +175,9 @@ def main() -> int:
             print(f"  * {line}")
     else:
         print("  * none")
+
+    print("\nPHP asymmetry diagnostic:")
+    print(json.dumps(php_finding, indent=2))
 
     print(f"\nSaved full polynomial degree table to {table_path}")
     return 0

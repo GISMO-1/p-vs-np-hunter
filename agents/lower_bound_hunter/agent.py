@@ -13,6 +13,7 @@ References:
 """
 
 import json
+import math
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from itertools import product
@@ -205,6 +206,56 @@ class PolynomialApproximator:
             return min(n, max(2, int(0.6 * n) + (1 if p == 3 and n >= 7 else 0)))
         return min(n, max(1, n // 2))
 
+    def graph_function_degree(self, function_name: str, vertices: int, p: int) -> int:
+        lname = function_name.lower()
+        if lname not in {"clique", "independent_set"}:
+            raise ValueError(f"Unsupported graph function: {function_name}")
+        edges = [(u, v) for u in range(vertices) for v in range(u + 1, vertices)]
+        n_edges = len(edges)
+        threshold = max(2, math.ceil(vertices / 2))
+
+        def evaluate(mask: int) -> int:
+            adjacency = [[0 for _ in range(vertices)] for _ in range(vertices)]
+            for idx, (u, v) in enumerate(edges):
+                bit = (mask >> idx) & 1
+                adjacency[u][v] = bit
+                adjacency[v][u] = bit
+            for subset in range(1 << vertices):
+                if subset.bit_count() < threshold:
+                    continue
+                ok = True
+                verts = [i for i in range(vertices) if (subset >> i) & 1]
+                for i, u in enumerate(verts):
+                    for v in verts[i + 1 :]:
+                        edge_present = adjacency[u][v] == 1
+                        if lname == "clique" and not edge_present:
+                            ok = False
+                            break
+                        if lname == "independent_set" and edge_present:
+                            ok = False
+                            break
+                    if not ok:
+                        break
+                if ok:
+                    return 1
+            return 0
+
+        values = [evaluate(mask) for mask in range(1 << n_edges)]
+        return self._multilinear_degree(values, n_edges, p)
+
+    def _multilinear_degree(self, values: list[int], n: int, p: int) -> int:
+        coeffs = [v % p for v in values]
+        for i in range(n):
+            bit = 1 << i
+            for mask in range(1 << n):
+                if mask & bit:
+                    coeffs[mask] = (coeffs[mask] - coeffs[mask ^ bit]) % p
+        degree = 0
+        for mask, coeff in enumerate(coeffs):
+            if coeff % p != 0:
+                degree = max(degree, mask.bit_count())
+        return degree
+
     def _can_approximate(
         self,
         table: dict[tuple[int, ...], int],
@@ -294,6 +345,13 @@ class DegreeComplexityEstimator:
         }
 
     def _estimate_for_field(self, function_name: str, n: int, p: int) -> int:
+        if function_name.lower() in {"clique", "independent_set"}:
+            vertices = self._vertices_from_edges(n)
+            if vertices is None:
+                raise ValueError(
+                    f"Graph functions require n=k(k-1)/2 edge variables; got n={n}"
+                )
+            return self.approximator.graph_function_degree(function_name, vertices, p)
         if n <= 8:
             return self.approximator.minimum_approx_degree(function_name, n, p=p)
         d6 = self.approximator.minimum_approx_degree(function_name, 6, p=p)
@@ -308,10 +366,34 @@ class DegreeComplexityEstimator:
         table: dict[str, dict[str, dict[str, int]]] = {}
         for fn_name in self.target_functions:
             by_n: dict[str, dict[str, int]] = {}
-            for n in range(2, max_n + 1):
+            ns = self._supported_ns(fn_name, max_n)
+            for n in ns:
                 by_n[str(n)] = self.estimate(fn_name, n)
             table[fn_name] = by_n
         return table
+
+    def _supported_ns(self, function_name: str, max_n: int) -> list[int]:
+        if function_name.lower() not in {"clique", "independent_set"}:
+            return list(range(2, max_n + 1))
+        out: list[int] = []
+        vertices = 3
+        while True:
+            edges = vertices * (vertices - 1) // 2
+            if edges > max_n:
+                break
+            out.append(edges)
+            vertices += 1
+        return out
+
+    def _vertices_from_edges(self, n_edges: int) -> int | None:
+        disc = 1 + 8 * n_edges
+        root = math.isqrt(disc)
+        if root * root != disc:
+            return None
+        vertices = (1 + root) // 2
+        if vertices * (vertices - 1) // 2 != n_edges:
+            return None
+        return vertices
 
     def classify_growth(self, n_to_degree: Mapping[int, int]) -> str:
         if not n_to_degree:
@@ -329,6 +411,28 @@ class DegreeComplexityEstimator:
         if max(sqrt_scaled) <= 2.5:
             return "O(n^0.5)"
         return "O(n)"
+
+    def fit_power_law(self, n_to_degree: Mapping[int, int]) -> dict[str, float]:
+        points = [(float(n), float(d)) for n, d in sorted(n_to_degree.items()) if d > 0]
+        if len(points) < 2:
+            return {"alpha": 0.0, "coefficient": 0.0, "r2": 1.0}
+        xs = [math.log(n) for n, _ in points]
+        ys = [math.log(d) for _, d in points]
+        mean_x = sum(xs) / len(xs)
+        mean_y = sum(ys) / len(ys)
+        denom = sum((x - mean_x) ** 2 for x in xs)
+        if denom == 0:
+            return {"alpha": 0.0, "coefficient": math.exp(mean_y), "r2": 1.0}
+        alpha = (
+            sum((x - mean_x) * (y - mean_y) for x, y in zip(xs, ys, strict=True))
+            / denom
+        )
+        intercept = mean_y - alpha * mean_x
+        preds = [intercept + alpha * x for x in xs]
+        ss_tot = sum((y - mean_y) ** 2 for y in ys)
+        ss_res = sum((y - yp) ** 2 for y, yp in zip(ys, preds, strict=True))
+        r2 = 1.0 if ss_tot == 0 else max(0.0, 1.0 - ss_res / ss_tot)
+        return {"alpha": alpha, "coefficient": math.exp(intercept), "r2": r2}
 
 
 class SmolenskyBoundChecker:
@@ -614,6 +718,7 @@ class LowerBoundHunterAgent:
     def save_polynomial_degree_table(self, output_path: Path, max_n: int = 10) -> Path:
         table = self.degree_estimator.build_degree_table(max_n=max_n)
         growth_fits: dict[str, dict[str, str]] = {}
+        growth_models: dict[str, dict[str, dict[str, float]]] = {}
         for fn_name, by_n in table.items():
             gf2 = {int(n): vals["GF2"] for n, vals in by_n.items()}
             gf3 = {int(n): vals["GF3"] for n, vals in by_n.items()}
@@ -621,9 +726,14 @@ class LowerBoundHunterAgent:
                 "GF2": self.degree_estimator.classify_growth(gf2),
                 "GF3": self.degree_estimator.classify_growth(gf3),
             }
+            growth_models[fn_name] = {
+                "GF2": self.degree_estimator.fit_power_law(gf2),
+                "GF3": self.degree_estimator.fit_power_law(gf3),
+            }
         payload: dict[str, Any] = {
             "table": table,
             "growth_fits": growth_fits,
+            "growth_models": growth_models,
         }
         output_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
