@@ -12,6 +12,7 @@ def test_draft_mode_translation_and_verification() -> None:
         {"function": "parity", "proof_sketch": "parity lower bound"}
     )
     assert Path(translated.lean_file_path).exists()
+    assert ": parity_requires_" in translated.theorem_statement
     result = agent.verify(translated.lean_file_path)
     assert result.status in {"draft_valid", "verified", "failed"}
 

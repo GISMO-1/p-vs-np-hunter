@@ -11,6 +11,7 @@ References:
 import json
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
+from uuid import uuid4
 from pathlib import Path
 from typing import Any, Literal, Mapping
 
@@ -46,25 +47,18 @@ class BarrierClassifier:
 
 
 class RewardCalculator:
-    def score(self, attempt: Mapping[str, Any]) -> float:
+    def score(self, attempt: Mapping[str, Any], seen_conjectures: set[str]) -> float:
         score = 0.0
-        if bool(attempt.get("lean_verified")):
-            score += 10.0
-        if attempt.get("type") == "conjecture" and bool(
-            attempt.get("small_case_support")
-        ):
-            score += 5.0
         if attempt.get("type") == "lower_bound":
-            score += 3.0
-        if bool(attempt.get("avoided_known_barrier")):
-            score += 1.0
-        barrier = str(attempt.get("barrier", "unknown"))
-        if barrier in {"natural_proofs", "relativization"}:
-            score -= 1.0
-        if bool(attempt.get("incorrect_claim")):
-            score -= 2.0
-        if bool(attempt.get("duplicate")):
-            score -= 0.5
+            score += 1.0 if bool(attempt.get("known_result")) else 3.0
+        if attempt.get("type") == "conjecture" and attempt.get("status") == "active":
+            conjecture_id = str(attempt.get("id", ""))
+            if conjecture_id and conjecture_id in seen_conjectures:
+                score -= 0.5
+            else:
+                if conjecture_id:
+                    seen_conjectures.add(conjecture_id)
+                score += 5.0
         return score
 
 
@@ -75,9 +69,10 @@ class SessionScorer:
 
     def session_score(self, session_id: str) -> float:
         total = 0.0
+        seen_conjectures: set[str] = set()
         for rec in _load_attempts(self.attempts_dir):
             if str(rec.get("session_id", "")) == session_id:
-                total += self.reward.score(rec)
+                total += self.reward.score(rec, seen_conjectures)
         return total
 
 
@@ -144,16 +139,18 @@ class MetaLearnerAgent:
             )
 
     def ingest_failure(self, attempt: Mapping[str, Any]) -> BarrierClassification:
-        barrier = self.classifier.classify(attempt)
+        normalized = self._normalize_attempt(attempt)
+        barrier = self.classifier.classify(normalized)
         classification = BarrierClassification(
             barrier=barrier,
             agent=str(
-                attempt.get("source_agent", attempt.get("from_agent", "unknown"))
+                normalized.get("source_agent", normalized.get("from_agent", "unknown"))
             ),
-            technique=str(attempt.get("technique", "unknown")),
-            failure_mode=str(attempt.get("failure_mode", "unknown")),
+            technique=str(normalized.get("technique", "unknown")),
+            failure_mode=str(normalized.get("failure_mode", "unknown")),
         )
-        self._update_proof_space_map(dict(attempt), classification)
+        self._persist_attempt(normalized)
+        self._update_proof_space_map(normalized, classification)
         return classification
 
     def recommend_strategy(self, context: Mapping[str, Any]) -> StrategyRecommendation:
@@ -180,6 +177,8 @@ class MetaLearnerAgent:
         for a in attempts:
             cls = str(a.get("circuit_class", "unknown"))
             tech = str(a.get("technique", "unknown"))
+            if cls == "unknown" or tech == "unknown":
+                continue
             classes.setdefault(cls, set()).add(tech)
         report = {
             "total_proof_attempts": total,
@@ -260,6 +259,28 @@ class MetaLearnerAgent:
             "timestamp": datetime.now(UTC).isoformat(),
             "session_id": msg["session_id"],
         }
+
+    def _normalize_attempt(self, attempt: Mapping[str, Any]) -> dict[str, Any]:
+        normalized = dict(attempt)
+        lb = normalized.get("lower_bound_result")
+        if isinstance(lb, Mapping):
+            normalized.setdefault("circuit_class", str(lb.get("circuit_class", "unknown")))
+            normalized.setdefault("technique", str(lb.get("method", "unknown")))
+            normalized.setdefault("known_result", bool(lb.get("known_result", False)))
+            normalized.setdefault("function", str(lb.get("function", "unknown")))
+        normalized.setdefault("circuit_class", str(normalized.get("circuit_class", "unknown")))
+        normalized.setdefault("technique", str(normalized.get("technique", "unknown")))
+        normalized.setdefault("session_id", str(normalized.get("session_id", "unknown")))
+        normalized.setdefault("status", str(normalized.get("status", "unknown")))
+        return normalized
+
+    def _persist_attempt(self, attempt: Mapping[str, Any]) -> Path:
+        self.attempts_dir.mkdir(parents=True, exist_ok=True)
+        stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%S%f")
+        ident = uuid4().hex[:8]
+        path = self.attempts_dir / f"meta_{stamp}_{ident}.json"
+        path.write_text(json.dumps(dict(attempt), indent=2), encoding="utf-8")
+        return path
 
     def _update_proof_space_map(
         self, attempt: dict[str, Any], classification: BarrierClassification

@@ -38,12 +38,11 @@ def test_strategy_avoids_zero_success_technique() -> None:
 
 def test_reward_cases() -> None:
     calc = RewardCalculator()
-    assert calc.score({"lean_verified": True}) == 10.0
-    assert calc.score({"type": "conjecture", "small_case_support": True}) == 5.0
-    assert calc.score({"type": "lower_bound"}) == 3.0
-    assert calc.score({"barrier": "natural_proofs"}) == -1.0
-    assert calc.score({"incorrect_claim": True}) == -2.0
-    assert calc.score({"duplicate": True}) == -0.5
+    seen: set[str] = set()
+    assert calc.score({"type": "lower_bound", "known_result": False}, seen) == 3.0
+    assert calc.score({"type": "lower_bound", "known_result": True}, seen) == 1.0
+    assert calc.score({"type": "conjecture", "status": "active", "id": "c1"}, seen) == 5.0
+    assert calc.score({"type": "conjecture", "status": "active", "id": "c1"}, seen) == -0.5
 
 
 def test_progress_report_empty_and_populated() -> None:
@@ -60,3 +59,21 @@ def test_progress_report_empty_and_populated() -> None:
     )
     populated = agent.get_progress_report()
     assert populated["total_proof_attempts"] >= 0
+
+
+def test_ingest_lower_bound_result_populates_tracking_fields() -> None:
+    agent = MetaLearnerAgent()
+    _ = agent.ingest_failure(
+        {
+            "session_id": "s-meta",
+            "type": "lower_bound",
+            "lower_bound_result": {
+                "circuit_class": "AC0",
+                "method": "random_restriction",
+                "known_result": True,
+            },
+        }
+    )
+    report = agent.get_progress_report()
+    assert "AC0" in report["techniques_tried_per_circuit_class"]
+    assert "random_restriction" in report["techniques_tried_per_circuit_class"]["AC0"]

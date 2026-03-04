@@ -48,13 +48,12 @@ class ConjectureTemplateEngine:
     """Generate formal conjectures from circuit/function/technique templates."""
 
     classes = ["AC0", "ACC0", "TC0", "NC1", "monotone", "P/poly"]
-    functions = ["parity", "majority", "clique", "independent set", "PHP"]
+    functions = ["parity", "majority", "clique", "independent_set", "php", "xor"]
     techniques = [
-        "random restriction",
-        "gate elimination",
-        "sunflower",
-        "approximation method",
-        "polynomial method",
+        "williams_pipeline",
+        "gate_elimination",
+        "random_restriction",
+        "monotone_lower_bound",
     ]
 
     def __init__(self) -> None:
@@ -73,58 +72,74 @@ class ConjectureTemplateEngine:
             "The {technique} barrier does NOT apply to {C} because {reason}.",
             "A faster-than-2^n algorithm for {C}-SAT implies {f} ∉ {C}.",
         ]
+        self._proposed_ids: set[str] = set()
+        self._cursor = 0
 
     def generate(self, context: Mapping[str, Any] | None = None) -> list[Conjecture]:
-        candidates = list(self._instantiate(context))
-        ranked = sorted(candidates, key=self._score, reverse=True)
-        return ranked[:24]
-
-    def _instantiate(self, context: Mapping[str, Any] | None) -> Iterable[Conjecture]:
         seed = str((context or {}).get("session", "s"))
+        combos = self._all_combinations(seed)
+        total = len(combos)
+        if total == 0:
+            return []
+        for _ in range(total):
+            combo = combos[self._cursor % total]
+            self._cursor += 1
+            conjectures = self._instantiate_combo(*combo)
+            fresh = [c for c in conjectures if c.id not in self._proposed_ids]
+            for c in fresh:
+                self._proposed_ids.add(c.id)
+            if fresh:
+                return sorted(fresh, key=self._score, reverse=True)
+        return []
+
+    def _all_combinations(self, seed: str) -> list[tuple[str, str, str, str]]:
+        combos: list[tuple[str, str, str, str]] = []
         for c_name in self.classes:
             for fn_name in self.functions:
-                if (c_name, fn_name) in self._known_true or (
-                    c_name,
-                    fn_name,
-                ) in self._known_false:
+                if (c_name, fn_name) in self._known_true or (c_name, fn_name) in self._known_false:
                     continue
-                if c_name == "AC0" and fn_name == "majority":
-                    continue
-                technique = self.techniques[
-                    (len(c_name) + len(fn_name)) % len(self.techniques)
-                ]
-                for idx, template in enumerate(self._template_texts):
-                    safe_class = c_name.lower().replace("/", "-")
-                    safe_fn = fn_name.replace(" ", "-").replace("/", "-")
-                    cid = f"tpl-{seed}-{safe_class}-{safe_fn}-{idx}"
-                    statement = template.format(
-                        C=c_name,
-                        f=fn_name,
-                        technique=technique,
-                        bound=self._bound(c_name, fn_name),
-                        reason="its combinatorial measure is non-natural in the Razborov-Rudich sense",
-                    )
-                    yield Conjecture(
-                        id=cid,
-                        statement=statement,
-                        informal_description=(
-                            f"Template-synthesized conjecture connecting {fn_name} hardness to {c_name}."
-                        ),
-                        motivation="Template synthesis over known circuit classes/functions/techniques.",
-                        related_results=[
-                            "Hastad-1986",
-                            "Razborov-1985",
-                            "Williams-2011",
-                        ],
-                        falsification_path="Search for small-n counterexamples or known-inclusion proofs.",
-                        implication_if_true="Progress on explicit lower bounds near P vs NP frontiers.",
-                        small_case_testable=idx in (0, 1),
-                        confidence_prior=0.35,
-                        confidence_history=[0.35],
-                    )
+                for technique in self.techniques:
+                    combos.append((seed, c_name, fn_name, technique))
+        return combos
+
+    def _instantiate_combo(self, seed: str, c_name: str, fn_name: str, technique: str) -> list[Conjecture]:
+        out: list[Conjecture] = []
+        for idx, template in enumerate(self._template_texts):
+            safe_class = c_name.lower().replace("/", "-")
+            safe_fn = fn_name.replace(" ", "-").replace("/", "-")
+            safe_tech = technique.replace(" ", "-")
+            cid = f"tpl-{seed}-{safe_class}-{safe_fn}-{safe_tech}-{idx}"
+            statement = template.format(
+                C=c_name,
+                f=fn_name,
+                technique=technique,
+                bound=self._bound(c_name, fn_name),
+                reason="its combinatorial measure is non-natural in the Razborov-Rudich sense",
+            )
+            out.append(
+                Conjecture(
+                    id=cid,
+                    statement=statement,
+                    informal_description=(
+                        f"Template-synthesized conjecture connecting {fn_name} hardness to {c_name} via {technique}."
+                    ),
+                    motivation="Template synthesis over known circuit classes/functions/techniques.",
+                    related_results=[
+                        "Hastad-1986",
+                        "Razborov-1985",
+                        "Williams-2011",
+                    ],
+                    falsification_path="Search for small-n counterexamples or known-inclusion proofs.",
+                    implication_if_true="Progress on explicit lower bounds near P vs NP frontiers.",
+                    small_case_testable=idx in (0, 1),
+                    confidence_prior=0.35,
+                    confidence_history=[0.35],
+                )
+            )
+        return out
 
     def _bound(self, circuit_class: str, fn_name: str) -> str:
-        if fn_name in {"parity", "clique"}:
+        if fn_name in {"parity", "clique", "xor"}:
             return "n^2"
         if circuit_class in {"ACC0", "TC0"}:
             return "n^(1+ε)"
@@ -346,7 +361,7 @@ class ConjectureEngineAgent:
 
     def propose(self, context: dict[str, Any] | None = None) -> list[Conjecture]:
         from_templates = self.template_engine.generate(context)
-        mined = self.miner.mine()
+        mined = [] if from_templates else self.miner.mine()
         local_llm = self.ollama.propose(context)
         conjectures = self._dedupe(from_templates + mined + local_llm)
         for conjecture in conjectures:
