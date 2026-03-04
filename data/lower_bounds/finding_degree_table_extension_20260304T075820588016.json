@@ -1,0 +1,21 @@
+{
+  "result_name": "extended_polynomial_degree_table_n15",
+  "function": "multiple",
+  "circuit_class": "ACC0",
+  "bound_type": "dataset_extension",
+  "known_result": false,
+  "method": "polynomial_method",
+  "extended_to_n": 15,
+  "functions": [
+    "parity",
+    "majority",
+    "php",
+    "xor",
+    "clique",
+    "independent_set"
+  ],
+  "mathematical_note": "Degree table extended from n<=10 to n<=15 for non-graph functions; graph functions use valid triangular edge counts up to 15. Power-law growth fits included for each field.",
+  "citations": [
+    "Smolensky-1987"
+  ]
+}

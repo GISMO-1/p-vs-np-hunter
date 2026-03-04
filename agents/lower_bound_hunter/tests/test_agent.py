@@ -74,6 +74,25 @@ def test_degree_table_generation_and_save(tmp_path: Path) -> None:
         tmp_path / "polynomial_degree_table.json", max_n=10
     )
     payload = json.loads(out.read_text(encoding="utf-8"))
-    assert set(payload) == {"table", "growth_fits"}
+    assert set(payload) == {"table", "growth_fits", "growth_models"}
     assert "majority" in payload["table"]
     assert payload["table"]["majority"]["10"]["GF2"] >= 0
+
+
+def test_graph_encoding_independent_set_not_flat() -> None:
+    agent = LowerBoundHunterAgent()
+    table = agent.degree_estimator.build_degree_table(max_n=15)
+    indep = {int(k): v for k, v in table["independent_set"].items()}
+    assert sorted(indep) == [3, 6, 10, 15]
+    gf2_vals = [indep[n]["GF2"] for n in sorted(indep)]
+    gf3_vals = [indep[n]["GF3"] for n in sorted(indep)]
+    assert gf2_vals[-1] >= gf2_vals[0]
+    assert gf3_vals[-1] >= gf3_vals[0]
+
+
+def test_php_asymmetry_extends_to_n15() -> None:
+    agent = LowerBoundHunterAgent()
+    table = agent.degree_estimator.build_degree_table(max_n=15)
+    php = {int(k): v for k, v in table["php"].items()}
+    assert 15 in php
+    assert php[15]["GF3"] > php[15]["GF2"]

@@ -1,0 +1,38 @@
+{
+  "result_name": "independent_set_graph_encoding_fix",
+  "function": "independent_set",
+  "circuit_class": "MONOTONE",
+  "bound_type": "encoding_correction",
+  "known_result": false,
+  "method": "polynomial_method",
+  "encoding_before": "n bits interpreted as vertices (incorrect for graph property).",
+  "encoding_after": "n = k(k-1)/2 bits interpreted as edges of a k-vertex graph.",
+  "supported_k_vertices": [
+    3,
+    4,
+    5,
+    6
+  ],
+  "degrees_after_fix": {
+    "3": {
+      "GF2": 3,
+      "GF3": 3
+    },
+    "6": {
+      "GF2": 6,
+      "GF3": 6
+    },
+    "10": {
+      "GF2": 9,
+      "GF3": 10
+    },
+    "15": {
+      "GF2": 15,
+      "GF3": 14
+    }
+  },
+  "mathematical_note": "The prior flat table was an encoding artifact. Independent set is now computed as a graph property over edge variables; observed degrees are reported at edge counts n in {3,6,10,15}, corresponding to k in {3,4,5,6} vertices.",
+  "citations": [
+    "Karp-1972"
+  ]
+}
