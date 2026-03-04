@@ -50,3 +50,15 @@ def test_serialization_schema(tmp_path: Path) -> None:
         "citations",
         "lean_ready",
     }
+
+
+def test_polynomial_method_marks_candidate_result() -> None:
+    agent = LowerBoundHunterAgent()
+    result = agent.hunt(
+        CircuitModel(CircuitClass.ACC0, 32, 4),
+        "majority",
+        technique="polynomial_method",
+    )
+    assert result.method == "polynomial_method"
+    assert result.known_result is False
+    assert "deg_1/3" in result.bound_value

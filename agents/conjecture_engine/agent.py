@@ -15,6 +15,8 @@ from pathlib import Path
 from typing import Any, Iterable, Mapping
 from urllib import request
 
+from agents.circuit_explorer.agent import BooleanFunction, CircuitExplorerAgent
+from agents.circuit_explorer.agent import CircuitModel as ExplorerCircuitModel
 from agents.lower_bound_hunter.agent import CircuitModel, LowerBoundHunterAgent
 from core.complexity_models.circuit import CircuitClass
 
@@ -32,6 +34,7 @@ class Conjecture:
     confidence_prior: float
     confidence_history: list[float] = field(default_factory=list)
     status: str = "active"
+    counterexample: str | None = None
 
 
 @dataclass
@@ -360,6 +363,7 @@ class ConjectureEngineAgent:
             self.config.get("local_llm_enabled", "true").lower() == "true",
         )
         self.hunter = LowerBoundHunterAgent()
+        self.explorer = CircuitExplorerAgent()
         self.db_dir = Path(self.config["conjecture_db_dir"])
         self.db_dir.mkdir(parents=True, exist_ok=True)
         self._active: list[Conjecture] = []
@@ -370,6 +374,8 @@ class ConjectureEngineAgent:
         local_llm = self.ollama.propose(context)
         conjectures = self._dedupe(from_templates + mined + local_llm)
         for conjecture in conjectures:
+            if conjecture.small_case_testable:
+                _ = self.test(conjecture)
             self._save(conjecture)
         self._active.extend(conjectures)
         return conjectures
@@ -391,33 +397,100 @@ class ConjectureEngineAgent:
                 conjecture.id, False, False, [], None, conjecture.confidence_history[-1]
             )
         tested_n = [2, 3, 4, 5]
-        falsified = (
-            "false" in conjecture.statement.lower()
-            or "p=np" in conjecture.statement.lower()
-        )
-        supported = False
+        supported = True
+        falsified = False
         counterexample: str | None = None
-        if (
-            not falsified
-            and "parity" in conjecture.statement.lower()
-            and "ac0" in conjecture.statement.lower()
-        ):
-            res = self.hunter.hunt(CircuitModel(CircuitClass.AC0, 20, 4), "parity")
-            supported = "exp(Omega" in res.bound_value
-        if falsified:
-            counterexample = "Known barrier: small-case solver does not support conjecture statement."
+        for n_vars in tested_n:
+            case_passed, case_counterexample = self._test_small_case(conjecture, n_vars)
+            outcome = "passed" if case_passed else "failed"
+            print(f"conjecture {conjecture.id} {outcome} n={n_vars} case")
+            if case_passed:
+                conjecture.confidence_prior = min(0.99, conjecture.confidence_prior + 0.1)
+                conjecture.confidence_history.append(conjecture.confidence_prior)
+                continue
+            supported = False
+            falsified = True
+            counterexample = case_counterexample
             conjecture.status = "falsified"
-            new_conf = 0.01
-        elif supported:
+            conjecture.counterexample = counterexample
+            conjecture.confidence_prior = 0.01
+            conjecture.confidence_history.append(conjecture.confidence_prior)
+            break
+
+        if supported:
             conjecture.status = "escalated"
-            new_conf = min(0.99, conjecture.confidence_history[-1] + 0.2)
-        else:
-            new_conf = max(0.05, conjecture.confidence_history[-1] - 0.1)
-        conjecture.confidence_history.append(new_conf)
+            conjecture.counterexample = None
         self._save(conjecture)
         return ConjectureTestResult(
-            conjecture.id, supported, falsified, tested_n, counterexample, new_conf
+            conjecture.id,
+            supported,
+            falsified,
+            tested_n,
+            counterexample,
+            conjecture.confidence_history[-1],
         )
+
+    def _test_small_case(self, conjecture: Conjecture, n_vars: int) -> tuple[bool, str | None]:
+        statement = conjecture.statement.lower()
+        fn_name = self._extract_function_name(statement)
+        cls = self._extract_circuit_class(statement)
+        if fn_name is None or cls is None:
+            return True, None
+        report = self.explorer.explore(
+            self._make_boolean_function(fn_name, n_vars),
+            [ExplorerCircuitModel(cls, max_size=max(4, n_vars + 4), max_depth=4)],
+        )
+        record = report.records[0]
+        min_size = record.minimum_size_found
+        if min_size is None:
+            return True, None
+        claimed_lower = self._claimed_size_lower_bound(statement, n_vars)
+        if claimed_lower is not None and min_size < claimed_lower:
+            return (
+                False,
+                f"n={n_vars}: found size-{min_size} circuit below claimed Ω({claimed_lower}) bound",
+            )
+        if "∉" in conjecture.statement or " not in " in f" {statement} ":
+            return (
+                False,
+                f"n={n_vars}: witness circuit exists (size={min_size}) for exclusion claim",
+            )
+        return True, None
+
+    def _extract_function_name(self, statement: str) -> str | None:
+        for fn_name in ["parity", "majority", "clique", "independent_set", "php", "xor"]:
+            if fn_name in statement:
+                return fn_name
+        return None
+
+    def _extract_circuit_class(self, statement: str) -> CircuitClass | None:
+        for cls in CircuitClass:
+            if cls.value.lower() in statement:
+                return cls
+        return None
+
+    def _claimed_size_lower_bound(self, statement: str, n_vars: int) -> int | None:
+        if "n^2" in statement:
+            return n_vars * n_vars
+        if "n log n" in statement:
+            return n_vars * 2
+        if "n^(1+ε)" in statement:
+            return n_vars + 1
+        return None
+
+    def _make_boolean_function(self, fn_name: str, n_vars: int) -> BooleanFunction:
+        names = tuple(f"x{i}" for i in range(n_vars))
+        if fn_name in {"parity", "xor"}:
+            evaluator = lambda a: sum(int(a[name]) for name in names) % 2 == 1
+        elif fn_name == "majority":
+            evaluator = lambda a: sum(int(a[name]) for name in names) >= (n_vars // 2 + 1)
+        elif fn_name == "clique":
+            evaluator = lambda a: all(bool(a[name]) for name in names)
+        elif fn_name == "independent_set":
+            evaluator = lambda a: sum(int(a[name]) for name in names) <= 1
+        else:
+            evaluator = lambda a: sum(int(a[name]) for name in names) == 0
+        return BooleanFunction(name=f"{fn_name}_{n_vars}", variable_names=names, evaluator=evaluator)
 
     def rank(self) -> list[Conjecture]:
         def score(conjecture: Conjecture) -> tuple[float, float, float, str]:
