@@ -75,3 +75,25 @@ def test_serialization_roundtrip(tmp_path: Path) -> None:
     saved = tmp_path / "db" / f"{c.id}.json"
     payload = json.loads(saved.read_text(encoding="utf-8"))
     assert payload["id"] == c.id
+
+
+def test_template_engine_avoids_duplicates_across_rounds() -> None:
+    engine = ConjectureTemplateEngine()
+    first = engine.generate({"session": "s1"})
+    second = engine.generate({"session": "s1"})
+    assert first and second
+    assert first[0].id != second[0].id
+
+
+def test_agent_switches_to_miner_when_templates_exhausted(tmp_path: Path) -> None:
+    _write(tmp_path / "lower_bounds" / "ac0.json", {"circuit_class": "AC0", "bound": "exp"})
+    _write(tmp_path / "lower_bounds" / "tc0.json", {"circuit_class": "TC0", "bound": "superpoly"})
+    agent = _agent(tmp_path)
+    agent.template_engine.classes = ["AC0"]
+    agent.template_engine.functions = ["parity"]
+    agent.template_engine.techniques = ["williams_pipeline"]
+    # Exhaust all 4 templates for the single available combination.
+    for _ in range(4):
+        _ = agent.propose({"session": "mini"})
+    out = agent.propose({"session": "mini"})
+    assert any(c.id.startswith("miner-") for c in out)

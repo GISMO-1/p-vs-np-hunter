@@ -200,31 +200,80 @@ class LowerBoundHunterAgent:
         self.db_dir.mkdir(parents=True, exist_ok=True)
 
     def hunt(
-        self, circuit_class: CircuitModel, target_function: str
+        self,
+        circuit_class: CircuitModel,
+        target_function: str,
+        technique: str = "williams_pipeline",
     ) -> LowerBoundResult:
-        result = self.pipeline.run(circuit_class.cls, target_function)
-        if (
-            target_function.lower() == "clique"
-            and circuit_class.cls == CircuitClass.MONOTONE
-        ):
-            result = self.monotone.clique_bound()
-        if (
-            target_function.lower() == "parity"
-            and circuit_class.cls == CircuitClass.AC0
-        ):
-            result.bound_value = self.restrictions.parity_ac0_bound(
-                circuit_class.max_depth
-            )
-            result.citations.append("Hastad-1986")
+        technique_key = technique.lower().strip()
+        if technique_key == "gate_elimination":
+            result = self._hunt_gate_elimination(circuit_class, target_function)
+        elif technique_key == "random_restriction":
+            result = self._hunt_random_restriction(circuit_class, target_function)
+        elif technique_key == "monotone_lower_bound":
+            result = self._hunt_monotone(circuit_class, target_function)
+        else:
+            result = self.pipeline.run(circuit_class.cls, target_function)
+
         self._store_result(result)
         return result
 
+    def _hunt_gate_elimination(
+        self, circuit_class: CircuitModel, target_function: str
+    ) -> LowerBoundResult:
+        func = target_function.lower()
+        n = max(2, circuit_class.max_size)
+        if func in {"parity", "xor", "majority"}:
+            lower = self.gate_elimination.lower_bound_small("xor", n)
+            return LowerBoundResult(
+                circuit_class=circuit_class.cls.value,
+                function=target_function,
+                bound_type="size",
+                bound_value=f"formula size >= {lower}",
+                algorithm_used="gate_elimination_small_functions",
+                confidence=0.8,
+                proof_sketch="Gate elimination removes at most one relevant variable per gate; n variables force n-1 gates.",
+                known_result=True,
+                method="gate_elimination",
+                citations=["Paul-1977", "Schnorr-1976"],
+                lean_ready=False,
+            )
+        return self.pipeline.run(circuit_class.cls, target_function)
+
+    def _hunt_random_restriction(
+        self, circuit_class: CircuitModel, target_function: str
+    ) -> LowerBoundResult:
+        base = self.pipeline.run(circuit_class.cls, target_function)
+        if circuit_class.cls == CircuitClass.AC0 and target_function.lower() in {
+            "parity",
+            "xor",
+        }:
+            base.bound_value = self.restrictions.parity_ac0_bound(circuit_class.max_depth)
+            base.method = "random_restriction"
+            base.algorithm_used = "hastad_switching_lemma"
+            base.citations.append("Hastad-1986")
+        return base
+
+    def _hunt_monotone(
+        self, circuit_class: CircuitModel, target_function: str
+    ) -> LowerBoundResult:
+        if target_function.lower() in {"clique", "independent_set"}:
+            result = self.monotone.clique_bound()
+            result.function = target_function
+            result.method = "monotone_lower_bound"
+            return result
+        return self.pipeline.run(circuit_class.cls, target_function)
+
     def validate_known_results(self) -> ValidationReport:
         parity = self.hunt(
-            CircuitModel(CircuitClass.AC0, max_size=32, max_depth=3), "parity"
+            CircuitModel(CircuitClass.AC0, max_size=32, max_depth=3),
+            "parity",
+            technique="random_restriction",
         )
         clique = self.hunt(
-            CircuitModel(CircuitClass.MONOTONE, max_size=64, max_depth=6), "clique"
+            CircuitModel(CircuitClass.MONOTONE, max_size=64, max_depth=6),
+            "clique",
+            technique="monotone_lower_bound",
         )
         checks = {
             "ac0_parity": "exp(Omega" in parity.bound_value,

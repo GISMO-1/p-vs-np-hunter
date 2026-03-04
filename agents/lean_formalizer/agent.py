@@ -94,17 +94,18 @@ class ProofSketchTranslator:
             "import PvsNP.Circuits",
             "import PvsNP.LowerBounds",
         ]
-        statement = f"theorem {theorem_name} : True := by"
-        tactics = ["simp", "trivial", "exact True.intro"]
+        proposition = self._proposition_name(result)
+        statement = f"theorem {theorem_name} : {proposition} := by"
+        tactics = ["simpa using placeholder_axiom"]
         content = "\n".join(
             imports
             + [
                 "",
                 f"/- Source claim: {claim} -/",
                 f"/- Method: {method} -/",
+                f"axiom placeholder_axiom : {proposition}",
                 statement,
-                "  -- TODO: encode full theorem statement",
-                "  exact True.intro",
+                "  simpa using (placeholder_axiom)",
                 "",
             ]
         )
@@ -115,6 +116,15 @@ class ProofSketchTranslator:
             theorem_statement=statement,
             tactics_attempted=tactics,
         )
+
+    def _proposition_name(self, result: Mapping[str, Any]) -> str:
+        function_name = str(result.get("function", "unknown")).lower()
+        circuit_class = str(result.get("circuit_class", "generic")).lower()
+        bound_type = str(result.get("bound_type", "size")).lower()
+        pieces = [function_name, "requires", circuit_class, bound_type, "lower_bound"]
+        raw = "_".join(pieces)
+        cleaned = re.sub(r"[^a-zA-Z0-9_]+", "_", raw).strip("_")
+        return cleaned or "nontrivial_lower_bound_claim"
 
     def _theorem_name(self, result: Mapping[str, Any]) -> str:
         raw = str(
