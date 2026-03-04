@@ -11,9 +11,9 @@ References:
 import json
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
-from uuid import uuid4
 from pathlib import Path
 from typing import Any, Literal, Mapping
+from uuid import uuid4
 
 BarrierType = Literal["relativization", "natural_proofs", "algebrization", "unknown"]
 
@@ -264,13 +264,19 @@ class MetaLearnerAgent:
         normalized = dict(attempt)
         lb = normalized.get("lower_bound_result")
         if isinstance(lb, Mapping):
-            normalized.setdefault("circuit_class", str(lb.get("circuit_class", "unknown")))
+            normalized.setdefault(
+                "circuit_class", str(lb.get("circuit_class", "unknown"))
+            )
             normalized.setdefault("technique", str(lb.get("method", "unknown")))
             normalized.setdefault("known_result", bool(lb.get("known_result", False)))
             normalized.setdefault("function", str(lb.get("function", "unknown")))
-        normalized.setdefault("circuit_class", str(normalized.get("circuit_class", "unknown")))
+        normalized.setdefault(
+            "circuit_class", str(normalized.get("circuit_class", "unknown"))
+        )
         normalized.setdefault("technique", str(normalized.get("technique", "unknown")))
-        normalized.setdefault("session_id", str(normalized.get("session_id", "unknown")))
+        normalized.setdefault(
+            "session_id", str(normalized.get("session_id", "unknown"))
+        )
         normalized.setdefault("status", str(normalized.get("status", "unknown")))
         return normalized
 

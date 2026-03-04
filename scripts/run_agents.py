@@ -46,7 +46,9 @@ def _target_boolean_function(name: str) -> BooleanFunction:
         evaluator = lambda a: bool((not a["x0"]) and (not a["x1"]) and (not a["x2"]))
     else:
         evaluator = lambda a: bool(a["x0"] ^ a["x1"])
-    return BooleanFunction(name=name, variable_names=variable_names, evaluator=evaluator)
+    return BooleanFunction(
+        name=name, variable_names=variable_names, evaluator=evaluator
+    )
 
 
 def run_loop(mission: str, model: str, rounds: int) -> dict[str, object]:
@@ -69,7 +71,8 @@ def run_loop(mission: str, model: str, rounds: int) -> dict[str, object]:
         technique = TECHNIQUES[round_index % len(TECHNIQUES)]
 
         explore = circuit_explorer.explore(
-            _target_boolean_function(target_function), [ExplorerCircuitModel(cls, 16, 3)]
+            _target_boolean_function(target_function),
+            [ExplorerCircuitModel(cls, 16, 3)],
         )
         sat_instance = sat_oracle.generate("3sat", 8 + round_index, k=3, ratio=4.0)
         lower = hunter.hunt(
@@ -93,7 +96,9 @@ def run_loop(mission: str, model: str, rounds: int) -> dict[str, object]:
 
         translated = formalizer.formalize(asdict(lower))
         verified = formalizer.verify(translated.lean_file_path)
-        feedback = formalizer.format_feedback(verified, "lower_bound_hunter", session_id)
+        feedback = formalizer.format_feedback(
+            verified, "lower_bound_hunter", session_id
+        )
 
         meta.ingest_failure(
             {

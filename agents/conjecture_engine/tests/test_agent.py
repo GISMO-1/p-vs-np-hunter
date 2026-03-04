@@ -86,8 +86,13 @@ def test_template_engine_avoids_duplicates_across_rounds() -> None:
 
 
 def test_agent_switches_to_miner_when_templates_exhausted(tmp_path: Path) -> None:
-    _write(tmp_path / "lower_bounds" / "ac0.json", {"circuit_class": "AC0", "bound": "exp"})
-    _write(tmp_path / "lower_bounds" / "tc0.json", {"circuit_class": "TC0", "bound": "superpoly"})
+    _write(
+        tmp_path / "lower_bounds" / "ac0.json", {"circuit_class": "AC0", "bound": "exp"}
+    )
+    _write(
+        tmp_path / "lower_bounds" / "tc0.json",
+        {"circuit_class": "TC0", "bound": "superpoly"},
+    )
     agent = _agent(tmp_path)
     agent.template_engine.classes = ["AC0"]
     agent.template_engine.functions = ["parity"]

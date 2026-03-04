@@ -96,13 +96,18 @@ class ConjectureTemplateEngine:
         combos: list[tuple[str, str, str, str]] = []
         for c_name in self.classes:
             for fn_name in self.functions:
-                if (c_name, fn_name) in self._known_true or (c_name, fn_name) in self._known_false:
+                if (c_name, fn_name) in self._known_true or (
+                    c_name,
+                    fn_name,
+                ) in self._known_false:
                     continue
                 for technique in self.techniques:
                     combos.append((seed, c_name, fn_name, technique))
         return combos
 
-    def _instantiate_combo(self, seed: str, c_name: str, fn_name: str, technique: str) -> list[Conjecture]:
+    def _instantiate_combo(
+        self, seed: str, c_name: str, fn_name: str, technique: str
+    ) -> list[Conjecture]:
         out: list[Conjecture] = []
         for idx, template in enumerate(self._template_texts):
             safe_class = c_name.lower().replace("/", "-")

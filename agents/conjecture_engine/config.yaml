@@ -1,4 +1,4 @@
-model: deepseek-r1
+model: deepseek-r1:1.5b
 local_llm_enabled: true
 ollama_host: http://localhost:11434
 conjecture_db_dir: data/conjectures

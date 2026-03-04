@@ -41,8 +41,12 @@ def test_reward_cases() -> None:
     seen: set[str] = set()
     assert calc.score({"type": "lower_bound", "known_result": False}, seen) == 3.0
     assert calc.score({"type": "lower_bound", "known_result": True}, seen) == 1.0
-    assert calc.score({"type": "conjecture", "status": "active", "id": "c1"}, seen) == 5.0
-    assert calc.score({"type": "conjecture", "status": "active", "id": "c1"}, seen) == -0.5
+    assert (
+        calc.score({"type": "conjecture", "status": "active", "id": "c1"}, seen) == 5.0
+    )
+    assert (
+        calc.score({"type": "conjecture", "status": "active", "id": "c1"}, seen) == -0.5
+    )
 
 
 def test_progress_report_empty_and_populated() -> None:

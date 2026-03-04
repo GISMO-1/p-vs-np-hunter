@@ -248,7 +248,9 @@ class LowerBoundHunterAgent:
             "parity",
             "xor",
         }:
-            base.bound_value = self.restrictions.parity_ac0_bound(circuit_class.max_depth)
+            base.bound_value = self.restrictions.parity_ac0_bound(
+                circuit_class.max_depth
+            )
             base.method = "random_restriction"
             base.algorithm_used = "hastad_switching_lemma"
             base.citations.append("Hastad-1986")

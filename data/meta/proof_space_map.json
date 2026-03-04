@@ -1,0 +1,14 @@
+{
+  "nodes": {
+    "williams_pipeline": {
+      "attempts": 6,
+      "successes": 0,
+      "barrier_hit_count": {
+        "unknown": 6
+      },
+      "success_rate": 0.0,
+      "last_attempted": "2026-03-04T06:28:27.228006+00:00"
+    }
+  },
+  "edges": []
+}
