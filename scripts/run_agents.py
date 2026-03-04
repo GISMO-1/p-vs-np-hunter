@@ -26,6 +26,7 @@ from core.complexity_models.circuit import CircuitClass
 TARGET_FUNCTIONS = ["parity", "majority", "clique", "independent_set", "php", "xor"]
 TECHNIQUES = [
     "williams_pipeline",
+    "polynomial_method",
     "gate_elimination",
     "random_restriction",
     "monotone_lower_bound",

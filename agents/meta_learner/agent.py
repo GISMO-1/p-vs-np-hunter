@@ -180,6 +180,11 @@ class MetaLearnerAgent:
             if cls == "unknown" or tech == "unknown":
                 continue
             classes.setdefault(cls, set()).add(tech)
+        candidate_new_results = sum(
+            1
+            for a in attempts
+            if a.get("type") == "lower_bound" and a.get("known_result") is False
+        )
         report = {
             "total_proof_attempts": total,
             "success_rate": (verified / total) if total else 0.0,
@@ -203,11 +208,7 @@ class MetaLearnerAgent:
                 "known_reproduced": sum(
                     1 for a in attempts if a.get("known_result") is True
                 ),
-                "candidate_new_results": sum(
-                    1
-                    for a in attempts
-                    if a.get("type") == "lower_bound" and a.get("known_result") is False
-                ),
+                "candidate_new_results": candidate_new_results,
             },
             "lean_verifications": {
                 "verified": verified,
@@ -216,6 +217,11 @@ class MetaLearnerAgent:
             },
             "estimated_distance_to_publishable_result": (
                 "high" if verified == 0 else "moderate"
+            ),
+            "alerts": (
+                ["CANDIDATE NEW RESULT - review required"]
+                if candidate_new_results > 0
+                else []
             ),
         }
         out = self.meta_dir / "progress_report.json"

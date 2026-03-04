@@ -102,3 +102,11 @@ def test_agent_switches_to_miner_when_templates_exhausted(tmp_path: Path) -> Non
         _ = agent.propose({"session": "mini"})
     out = agent.propose({"session": "mini"})
     assert any(c.id.startswith("miner-") for c in out)
+
+
+def test_propose_runs_small_case_tester_and_updates_history(tmp_path: Path) -> None:
+    agent = _agent(tmp_path)
+    out = agent.propose({"session": "small-case"})
+    tested = [c for c in out if c.small_case_testable]
+    assert tested
+    assert any(len(c.confidence_history) > 1 for c in tested)
