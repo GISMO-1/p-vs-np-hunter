@@ -3,8 +3,8 @@ import PvsNP.Basic
 import PvsNP.Circuits
 import PvsNP.LowerBounds
 
-/- Source claim: Approximate monotone circuits by low-sunflower families and compare acceptance probabilities on random positive/negative graph distributions. -/
-/- Method: monotone_lower_bound -/
-axiom placeholder_axiom : independent_set_requires_monotone_size_lower_bound
-theorem attempt_independent_set : independent_set_requires_monotone_size_lower_bound := by
+/- Source claim: Using SAT exponent 2^(n^0.990) for ACC0, apply Williams' inversion: nontrivial satisfiability for the class yields NEXP lower bounds against that class. -/
+/- Method: williams_pipeline -/
+axiom placeholder_axiom : independent_set_requires_acc0_size_lower_bound
+theorem attempt_independent_set : independent_set_requires_acc0_size_lower_bound := by
   simpa using (placeholder_axiom)

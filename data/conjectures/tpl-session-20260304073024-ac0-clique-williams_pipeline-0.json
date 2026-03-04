@@ -1,0 +1,21 @@
+{
+  "id": "tpl-session-20260304073024-ac0-clique-williams_pipeline-0",
+  "statement": "For circuit class AC0, function clique requires size \u03a9(n^2).",
+  "informal_description": "Template-synthesized conjecture connecting clique hardness to AC0 via williams_pipeline.",
+  "motivation": "Template synthesis over known circuit classes/functions/techniques.",
+  "related_results": [
+    "Hastad-1986",
+    "Razborov-1985",
+    "Williams-2011"
+  ],
+  "falsification_path": "Search for small-n counterexamples or known-inclusion proofs.",
+  "implication_if_true": "Progress on explicit lower bounds near P vs NP frontiers.",
+  "small_case_testable": true,
+  "confidence_prior": 0.01,
+  "confidence_history": [
+    0.35,
+    0.01
+  ],
+  "status": "falsified",
+  "counterexample": "n=2: found size-3 circuit below claimed \u03a9(4) bound"
+}

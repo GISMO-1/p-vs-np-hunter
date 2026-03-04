@@ -1,0 +1,42 @@
+{
+  "function_name": "php",
+  "output_path": "",
+  "records": [
+    {
+      "depth": 3,
+      "minimum_size_found": 6,
+      "model": "ACC0",
+      "structural_invariants": {
+        "depth_size_tradeoff": {
+          "3": 6
+        },
+        "gate_elimination_candidates": [],
+        "locality_score": 3.0,
+        "symmetry_group_size": 6
+      },
+      "switching_lemma_check": {
+        "p": 0.1,
+        "t": 3.0,
+        "tail_probability": 0.0010000000000000002,
+        "upper_bound": 3.375
+      },
+      "witness_expression": "NOT(OR(x0,OR(x1,x2)))"
+    }
+  ],
+  "timestamp": "2026-03-04T07:30:59.978259+00:00",
+  "truth_table": {
+    "000": true,
+    "001": false,
+    "010": false,
+    "011": false,
+    "100": false,
+    "101": false,
+    "110": false,
+    "111": false
+  },
+  "variable_names": [
+    "x0",
+    "x1",
+    "x2"
+  ]
+}

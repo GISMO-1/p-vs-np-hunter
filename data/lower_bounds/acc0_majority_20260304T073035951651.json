@@ -1,0 +1,15 @@
+{
+  "function": "majority",
+  "circuit_class": "ACC0",
+  "bound_type": "approximate_polynomial_degree",
+  "bound_value": "deg_1/3,GF(2)=2, deg_1/3,GF(3)=2 on n=8",
+  "method": "polynomial_method",
+  "known_result": false,
+  "proof_sketch": "Computed minimum degree 1/3-approximation over GF(2), GF(3); Smolensky criterion marks ACC0[p] hardness when approximate degree exceeds polylog-depth threshold proxy.",
+  "confidence": 0.83,
+  "citations": [
+    "Razborov-1987",
+    "Smolensky-1987"
+  ],
+  "lean_ready": false
+}

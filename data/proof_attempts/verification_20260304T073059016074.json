@@ -1,0 +1,9 @@
+{
+  "status": "draft_valid",
+  "theorem": "attempt_independent_set",
+  "lean_file": "lean\\pvsnp_hunter\\PvsNP\\Attempts\\attempt_independent_set.lean",
+  "error_message": null,
+  "failed_tactic": null,
+  "lean_verified": false,
+  "ready_for_library": false
+}

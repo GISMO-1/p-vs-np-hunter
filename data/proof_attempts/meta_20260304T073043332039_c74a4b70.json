@@ -1,0 +1,10 @@
+{
+  "session_id": "session-20260304073024",
+  "type": "conjecture",
+  "source_agent": "conjecture_engine",
+  "id": "tpl-session-20260304073024-ac0-majority-gate_elimination-0",
+  "status": "falsified",
+  "circuit_class": "ACC0",
+  "technique": "polynomial_method",
+  "lean_verified": false
+}

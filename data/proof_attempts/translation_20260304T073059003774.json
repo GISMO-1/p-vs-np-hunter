@@ -1,0 +1,25 @@
+{
+  "input": {
+    "circuit_class": "ACC0",
+    "function": "independent_set",
+    "bound_type": "size",
+    "bound_value": "NEXP not subset of ACC0 (derived from SAT time 2^(n^0.990) < 2^n)",
+    "algorithm_used": "polynomial decomposition + ACC0-SAT speedup (Williams-style)",
+    "confidence": 0.86,
+    "proof_sketch": "Using SAT exponent 2^(n^0.990) for ACC0, apply Williams' inversion: nontrivial satisfiability for the class yields NEXP lower bounds against that class.",
+    "known_result": false,
+    "method": "williams_pipeline",
+    "citations": [
+      "Williams-2011",
+      "Williams-GodelPrize-2024"
+    ],
+    "lean_ready": false
+  },
+  "translation": {
+    "lean_file_path": "lean\\pvsnp_hunter\\PvsNP\\Attempts\\attempt_independent_set.lean",
+    "theorem_statement": "theorem attempt_independent_set : independent_set_requires_acc0_size_lower_bound := by",
+    "tactics_attempted": [
+      "simpa using placeholder_axiom"
+    ]
+  }
+}

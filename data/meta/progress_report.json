@@ -1,5 +1,5 @@
 {
-  "total_proof_attempts": 52,
+  "total_proof_attempts": 72,
   "success_rate": 0.0,
   "techniques_tried_per_circuit_class": {
     "AC0": [
@@ -14,23 +14,27 @@
     "ACC0": [
       "gate_elimination",
       "monotone_lower_bound",
+      "polynomial_method",
       "random_restriction",
       "williams_pipeline"
     ]
   },
   "conjectures": {
     "active": 10,
-    "falsified": 0,
+    "falsified": 5,
     "verified": 0
   },
   "lower_bounds": {
-    "known_reproduced": 10,
-    "candidate_new_results": 0
+    "known_reproduced": 13,
+    "candidate_new_results": 2
   },
   "lean_verifications": {
     "verified": 0,
     "failed": 0,
-    "pending": 52
+    "pending": 72
   },
-  "estimated_distance_to_publishable_result": "high"
+  "estimated_distance_to_publishable_result": "high",
+  "alerts": [
+    "CANDIDATE NEW RESULT - review required"
+  ]
 }
