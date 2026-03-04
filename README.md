@@ -1,3 +1,13 @@
+![CI](https://github.com/GISMO-1/p-vs-np-hunter/actions/workflows/ci.yml/badge.svg)
+![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)
+![Python](https://img.shields.io/badge/python-3.12-blue.svg)
+![Lean4](https://img.shields.io/badge/formal%20proofs-Lean%204-purple.svg)
+![Agents](https://img.shields.io/badge/agents-6%20operational-brightgreen.svg)
+![Target](https://img.shields.io/badge/target-P%20vs%20NP-red.svg)
+![Prize](https://img.shields.io/badge/prize-$1%2C000%2C000-gold.svg)
+![Status](https://img.shields.io/badge/status-computational%20evidence%20phase-yellow.svg)
+![Millennium](https://img.shields.io/badge/Clay%20Millennium-Prize%20Problem-orange.svg)
+
 # 🔬 pvsnp-hunter
 
 ## Current Status: ALL 6 AGENTS OPERATIONAL
