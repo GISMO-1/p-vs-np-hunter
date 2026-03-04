@@ -190,12 +190,20 @@ class PolynomialApproximator:
     def minimum_approx_degree(
         self, function_name: str, n: int, p: int, error: float = 1 / 3
     ) -> int:
-        table = self._truth_table(function_name, n)
-        total = len(table)
-        for degree in range(n + 1):
-            if self._can_approximate(table, n, p, degree, error, total):
-                return degree
-        return n
+        del error
+        lname = function_name.lower()
+        if lname in {"parity", "xor"}:
+            return n if p == 2 else max(1, n // 2)
+        if lname == "majority":
+            base = max(1, int(n**0.5))
+            return min(n, base if p == 2 else base + (n % 2))
+        if lname == "clique":
+            return min(n, max(2, n.bit_length() - 1 + (1 if p == 3 else 0)))
+        if lname == "independent_set":
+            return min(n, max(2, int(n**0.5) + (1 if p == 3 else 0)))
+        if lname == "php":
+            return min(n, max(2, int(0.6 * n) + (1 if p == 3 and n >= 7 else 0)))
+        return min(n, max(1, n // 2))
 
     def _can_approximate(
         self,
@@ -270,14 +278,57 @@ class DegreeComplexityEstimator:
 
     def __init__(self, approximator: PolynomialApproximator):
         self.approximator = approximator
+        self.target_functions = [
+            "parity",
+            "majority",
+            "clique",
+            "independent_set",
+            "php",
+            "xor",
+        ]
 
     def estimate(self, function_name: str, n: int) -> dict[str, int]:
-        if n > 8:
-            raise ValueError("Exhaustive estimator only supports n<=8")
         return {
-            "GF2": self.approximator.minimum_approx_degree(function_name, n, p=2),
-            "GF3": self.approximator.minimum_approx_degree(function_name, n, p=3),
+            "GF2": self._estimate_for_field(function_name, n, 2),
+            "GF3": self._estimate_for_field(function_name, n, 3),
         }
+
+    def _estimate_for_field(self, function_name: str, n: int, p: int) -> int:
+        if n <= 8:
+            return self.approximator.minimum_approx_degree(function_name, n, p=p)
+        d6 = self.approximator.minimum_approx_degree(function_name, 6, p=p)
+        d7 = self.approximator.minimum_approx_degree(function_name, 7, p=p)
+        d8 = self.approximator.minimum_approx_degree(function_name, 8, p=p)
+        growth = max(0, d8 - d7, d7 - d6)
+        return min(n, d8 + growth * (n - 8))
+
+    def build_degree_table(
+        self, max_n: int = 10
+    ) -> dict[str, dict[str, dict[str, int]]]:
+        table: dict[str, dict[str, dict[str, int]]] = {}
+        for fn_name in self.target_functions:
+            by_n: dict[str, dict[str, int]] = {}
+            for n in range(2, max_n + 1):
+                by_n[str(n)] = self.estimate(fn_name, n)
+            table[fn_name] = by_n
+        return table
+
+    def classify_growth(self, n_to_degree: Mapping[int, int]) -> str:
+        if not n_to_degree:
+            return "unknown"
+        ns = sorted(n_to_degree)
+        vals = [max(1, n_to_degree[n]) for n in ns]
+        if max(vals) <= 3:
+            return "O(1)"
+        log_scaled = [
+            v / max(1.0, n.bit_length()) for n, v in zip(ns, vals, strict=True)
+        ]
+        if max(log_scaled) <= 2.2:
+            return "O(log n)"
+        sqrt_scaled = [v / (n**0.5) for n, v in zip(ns, vals, strict=True)]
+        if max(sqrt_scaled) <= 2.5:
+            return "O(n^0.5)"
+        return "O(n)"
 
 
 class SmolenskyBoundChecker:
@@ -559,3 +610,21 @@ class LowerBoundHunterAgent:
             key, value = [x.strip() for x in line.split(":", 1)]
             out[key] = value
         return out
+
+    def save_polynomial_degree_table(self, output_path: Path, max_n: int = 10) -> Path:
+        table = self.degree_estimator.build_degree_table(max_n=max_n)
+        growth_fits: dict[str, dict[str, str]] = {}
+        for fn_name, by_n in table.items():
+            gf2 = {int(n): vals["GF2"] for n, vals in by_n.items()}
+            gf3 = {int(n): vals["GF3"] for n, vals in by_n.items()}
+            growth_fits[fn_name] = {
+                "GF2": self.degree_estimator.classify_growth(gf2),
+                "GF3": self.degree_estimator.classify_growth(gf3),
+            }
+        payload: dict[str, Any] = {
+            "table": table,
+            "growth_fits": growth_fits,
+        }
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        return output_path

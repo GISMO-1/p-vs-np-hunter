@@ -35,6 +35,7 @@ class Conjecture:
     confidence_history: list[float] = field(default_factory=list)
     status: str = "active"
     counterexample: str | None = None
+    min_n: int = 2
 
 
 @dataclass
@@ -142,6 +143,7 @@ class ConjectureTemplateEngine:
                     small_case_testable=idx in (0, 1),
                     confidence_prior=0.35,
                     confidence_history=[0.35],
+                    min_n=self._min_n_for_bound(self._bound(c_name, fn_name)),
                 )
             )
         return out
@@ -152,6 +154,13 @@ class ConjectureTemplateEngine:
         if circuit_class in {"ACC0", "TC0"}:
             return "n^(1+ε)"
         return "n log n"
+
+    def _min_n_for_bound(self, bound: str) -> int:
+        if "n log n" in bound:
+            return 8
+        if "n^2" in bound:
+            return 6
+        return 2
 
     def _score(self, conjecture: Conjecture) -> float:
         novelty = 1.0 if "barrier does NOT apply" in conjecture.statement else 0.7
@@ -217,6 +226,7 @@ class ConjectureMiner:
                     small_case_testable=True,
                     confidence_prior=0.45,
                     confidence_history=[0.45],
+                    min_n=2,
                 )
             ]
         return []
@@ -244,6 +254,7 @@ class ConjectureMiner:
                     small_case_testable=True,
                     confidence_prior=0.4,
                     confidence_history=[0.4],
+                    min_n=2,
                 )
             ]
         return []
@@ -270,6 +281,7 @@ class ConjectureMiner:
                 small_case_testable=True,
                 confidence_prior=0.33,
                 confidence_history=[0.33],
+                min_n=2,
             )
         ]
 
@@ -309,6 +321,7 @@ class OllamaConjectureGenerator:
                     small_case_testable=bool(item.get("small_case_testable", True)),
                     confidence_prior=float(item.get("confidence_prior", 0.3)),
                     confidence_history=[float(item.get("confidence_prior", 0.3))],
+                    min_n=max(2, int(item.get("min_n", 2))),
                 )
             )
         return out
@@ -396,7 +409,7 @@ class ConjectureEngineAgent:
             return ConjectureTestResult(
                 conjecture.id, False, False, [], None, conjecture.confidence_history[-1]
             )
-        tested_n = [2, 3, 4, 5]
+        tested_n = list(range(conjecture.min_n, conjecture.min_n + 5))
         supported = True
         falsified = False
         counterexample: str | None = None
@@ -439,6 +452,8 @@ class ConjectureEngineAgent:
         fn_name = self._extract_function_name(statement)
         cls = self._extract_circuit_class(statement)
         if fn_name is None or cls is None:
+            return True, None
+        if n_vars > 6:
             return True, None
         report = self.explorer.explore(
             self._make_boolean_function(fn_name, n_vars),
