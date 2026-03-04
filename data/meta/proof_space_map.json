@@ -1,13 +1,13 @@
 {
   "nodes": {
     "williams_pipeline": {
-      "attempts": 21,
-      "successes": 0,
+      "attempts": 31,
+      "successes": 1,
       "barrier_hit_count": {
-        "unknown": 21
+        "unknown": 31
       },
-      "success_rate": 0.0,
-      "last_attempted": "2026-03-04T07:31:07.453310+00:00"
+      "success_rate": 0.03225806451612903,
+      "last_attempted": "2026-03-04T16:52:28.093070+00:00"
     },
     "gate_elimination": {
       "attempts": 5,

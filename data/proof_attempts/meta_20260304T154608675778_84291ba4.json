@@ -1,0 +1,10 @@
+{
+  "session_id": "session-20260304153706",
+  "type": "conjecture",
+  "source_agent": "conjecture_engine",
+  "id": "tpl-session-20260304153706-ac0-majority-williams_pipeline-0",
+  "status": "escalated",
+  "circuit_class": "AC0",
+  "technique": "williams_pipeline",
+  "lean_verified": false
+}

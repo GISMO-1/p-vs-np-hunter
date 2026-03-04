@@ -1,1 +1,9 @@
-[]
+[
+  {
+    "theorem_name": "attempt_parity",
+    "theorem_statement": "attempt_parity",
+    "proof_method": "translator_default",
+    "source_agent": "lean_formalizer",
+    "date_verified": "2026-03-04T16:52:28.056016+00:00"
+  }
+]

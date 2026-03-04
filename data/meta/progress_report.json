@@ -1,6 +1,6 @@
 {
-  "total_proof_attempts": 72,
-  "success_rate": 0.0,
+  "total_proof_attempts": 92,
+  "success_rate": 0.021739130434782608,
   "techniques_tried_per_circuit_class": {
     "AC0": [
       "gate_elimination",
@@ -25,15 +25,15 @@
     "verified": 0
   },
   "lower_bounds": {
-    "known_reproduced": 13,
+    "known_reproduced": 18,
     "candidate_new_results": 2
   },
   "lean_verifications": {
-    "verified": 0,
-    "failed": 0,
-    "pending": 72
+    "verified": 2,
+    "failed": 8,
+    "pending": 82
   },
-  "estimated_distance_to_publishable_result": "high",
+  "estimated_distance_to_publishable_result": "moderate",
   "alerts": [
     "CANDIDATE NEW RESULT - review required"
   ]

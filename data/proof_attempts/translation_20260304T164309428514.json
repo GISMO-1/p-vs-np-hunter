@@ -1,0 +1,26 @@
+{
+  "input": {
+    "circuit_class": "AC0",
+    "function": "parity",
+    "bound_type": "size",
+    "bound_value": "NEXP not subset of AC0 (derived from SAT time 2^(n^0.920) < 2^n)",
+    "algorithm_used": "depth-reduction + random restrictions SAT (AC0 baseline)",
+    "confidence": 0.8,
+    "proof_sketch": "Using SAT exponent 2^(n^0.920) for AC0, apply Williams' inversion: nontrivial satisfiability for the class yields NEXP lower bounds against that class.",
+    "known_result": true,
+    "method": "williams_pipeline",
+    "citations": [
+      "Williams-2011",
+      "Williams-GodelPrize-2024"
+    ],
+    "lean_ready": false
+  },
+  "translation": {
+    "lean_file_path": "C:\\repos\\p-vs-np-hunter\\lean\\pvsnp_hunter\\PvsNP\\Attempts\\attempt_parity.lean",
+    "theorem_statement": "theorem attempt_parity : parity_requires_ac0_size_lower_bound := by",
+    "tactics_attempted": [
+      "intro n _",
+      "trivial"
+    ]
+  }
+}

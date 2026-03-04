@@ -1,0 +1,9 @@
+{
+  "status": "failed",
+  "theorem": "attempt_parity",
+  "lean_file": "C:\\repos\\p-vs-np-hunter\\lean\\pvsnp_hunter\\PvsNP\\Attempts\\attempt_parity.lean",
+  "error_message": "error: PvsNP/Attempts/attempt_parity.lean:9:0: type of theorem `attempt_parity` is not a proposition",
+  "failed_tactic": "aesop",
+  "lean_verified": false,
+  "ready_for_library": false
+}

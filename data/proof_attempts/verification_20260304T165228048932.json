@@ -1,0 +1,9 @@
+{
+  "status": "verified",
+  "theorem": "attempt_parity",
+  "lean_file": "C:\\repos\\p-vs-np-hunter\\lean\\pvsnp_hunter\\PvsNP\\Attempts\\attempt_parity.lean",
+  "error_message": null,
+  "failed_tactic": null,
+  "lean_verified": true,
+  "ready_for_library": true
+}

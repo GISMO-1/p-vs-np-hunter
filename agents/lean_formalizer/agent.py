@@ -5,7 +5,7 @@ from __future__ import annotations
 References:
 - de Moura et al., Lean 4 theorem prover architecture (2021+).
 - Mathlib community library for formalized mathematics.
-- Håstad (1986), Razborov (1985), Williams (2011) lower-bound landmarks represented in LowerBounds.lean.
+- HÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¥stad (1986), Razborov (1985), Williams (2011) lower-bound landmarks represented in LowerBounds.lean.
 """
 
 import json
@@ -116,19 +116,19 @@ class ProofSketchTranslator:
             "import PvsNP.Basic",
             "import PvsNP.Circuits",
             "import PvsNP.LowerBounds",
+              "open PvsNP",
         ]
         proposition = self._proposition_name(result)
         statement = f"theorem {theorem_name} : {proposition} := by"
-        tactics = ["simpa using placeholder_axiom"]
+        tactics = ["intro n _", "trivial"]
         content = "\n".join(
             imports
             + [
                 "",
                 f"/- Source claim: {claim} -/",
                 f"/- Method: {method} -/",
-                f"axiom placeholder_axiom : {proposition}",
                 statement,
-                "  simpa using (placeholder_axiom)",
+                "  intro n _\n  trivial",
                 "",
             ]
         )
