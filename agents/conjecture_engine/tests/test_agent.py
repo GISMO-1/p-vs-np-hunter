@@ -110,3 +110,24 @@ def test_propose_runs_small_case_tester_and_updates_history(tmp_path: Path) -> N
     tested = [c for c in out if c.small_case_testable]
     assert tested
     assert any(len(c.confidence_history) > 1 for c in tested)
+
+
+def test_template_sets_min_n_for_asymptotic_bounds() -> None:
+    engine = ConjectureTemplateEngine()
+    conjectures = engine.generate({"session": "min-n"})
+    assert conjectures
+    size_bound = [c for c in conjectures if "requires size Ω(" in c.statement]
+    assert size_bound
+    c = size_bound[0]
+    if "n log n" in c.statement:
+        assert c.min_n >= 8
+    if "n^2" in c.statement:
+        assert c.min_n >= 6
+
+
+def test_small_case_tester_respects_min_n(tmp_path: Path) -> None:
+    agent = _agent(tmp_path)
+    conjecture = agent.propose({"session": "min-n-run"})[0]
+    conjecture.min_n = 8
+    result = agent.test(conjecture)
+    assert result.tested_n == [8, 9, 10, 11, 12]

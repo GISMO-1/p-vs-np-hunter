@@ -62,3 +62,18 @@ def test_polynomial_method_marks_candidate_result() -> None:
     assert result.method == "polynomial_method"
     assert result.known_result is False
     assert "deg_1/3" in result.bound_value
+
+
+def test_degree_table_generation_and_save(tmp_path: Path) -> None:
+    cfg = tmp_path / "config.yaml"
+    cfg.write_text(
+        "lower_bound_db_dir: " + str(tmp_path / "db") + "\n", encoding="utf-8"
+    )
+    agent = LowerBoundHunterAgent(config_path=cfg)
+    out = agent.save_polynomial_degree_table(
+        tmp_path / "polynomial_degree_table.json", max_n=10
+    )
+    payload = json.loads(out.read_text(encoding="utf-8"))
+    assert set(payload) == {"table", "growth_fits"}
+    assert "majority" in payload["table"]
+    assert payload["table"]["majority"]["10"]["GF2"] >= 0
