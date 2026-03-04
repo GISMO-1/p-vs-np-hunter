@@ -226,7 +226,7 @@ class ConjectureMiner:
                     small_case_testable=True,
                     confidence_prior=0.45,
                     confidence_history=[0.45],
-                    min_n=2,
+                    min_n=8,
                 )
             ]
         return []
@@ -254,7 +254,7 @@ class ConjectureMiner:
                     small_case_testable=True,
                     confidence_prior=0.4,
                     confidence_history=[0.4],
-                    min_n=2,
+                    min_n=8,
                 )
             ]
         return []
@@ -281,7 +281,7 @@ class ConjectureMiner:
                 small_case_testable=True,
                 confidence_prior=0.33,
                 confidence_history=[0.33],
-                min_n=2,
+                min_n=8,
             )
         ]
 

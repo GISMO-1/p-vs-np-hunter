@@ -57,7 +57,11 @@ class LeanEnvironment:
         self._ensure_layout()
 
     def _detect_project_root(self, candidate: Path) -> Path:
-        options = [candidate, Path("lean/pvsnp_hunter"), Path.cwd() / "lean/pvsnp_hunter"]
+        options = [
+            candidate,
+            Path("lean/pvsnp_hunter"),
+            Path.cwd() / "lean/pvsnp_hunter",
+        ]
         for option in options:
             resolved = option.resolve()
             if (resolved / "lakefile.lean").exists() and (resolved / "PvsNP").exists():
@@ -66,7 +70,9 @@ class LeanEnvironment:
             maybe = parent / "lean" / "pvsnp_hunter"
             if (maybe / "lakefile.lean").exists() and (maybe / "PvsNP").exists():
                 return maybe.resolve()
-        raise FileNotFoundError("Unable to detect Lean Lake project root at lean/pvsnp_hunter/.")
+        raise FileNotFoundError(
+            "Unable to detect Lean Lake project root at lean/pvsnp_hunter/."
+        )
 
     def _lean_available(self) -> bool:
         return shutil.which("elan") is not None and shutil.which("lake") is not None
@@ -243,10 +249,18 @@ class LeanVerifier:
 
 class LeanFormalizerAgent:
     def __init__(self, config_path: str | Path | None = None):
-        cfg_path = Path(config_path) if config_path else Path(__file__).with_name("config.yaml")
+        cfg_path = (
+            Path(config_path)
+            if config_path
+            else Path(__file__).with_name("config.yaml")
+        )
         self.config = self._load_config(cfg_path)
-        self.project_root = Path(str(self.config.get("project_root", "lean/pvsnp_hunter")))
-        self.attempts_dir = Path(str(self.config.get("attempts_dir", "data/proof_attempts")))
+        self.project_root = Path(
+            str(self.config.get("project_root", "lean/pvsnp_hunter"))
+        )
+        self.attempts_dir = Path(
+            str(self.config.get("attempts_dir", "data/proof_attempts"))
+        )
         self.attempts_dir.mkdir(parents=True, exist_ok=True)
         self.env = LeanEnvironment(
             self.project_root,
